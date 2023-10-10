@@ -22,10 +22,10 @@ jobs:
         node-version: [ 16.x, 18.x ]
 
     steps:
-      - uses: actions/checkout@7cdaf2fbc075e6f3b9ca94cfd6cec5adc8a75622
+      - uses: actions/checkout@v4
 
       - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@2a017f350dbf6c4b6bb4508cc83809719115162e
+        uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node-version }}
           cache: yarn
@@ -45,6 +45,6 @@ jobs:
 
       - name: Codecov
         if: ${{ matrix.node-version == '18.x' }}
-        uses: codecov/codecov-action@392e27ba6310685ec4f77b73f0fd058cb445f246
+        uses: codecov/codecov-action@v3
 
 ...
