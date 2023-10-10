@@ -26,10 +26,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@7cdaf2fbc075e6f3b9ca94cfd6cec5adc8a75622
+      - uses: actions/checkout@v4
 
       - name: Use Node.js 18
-        uses: actions/setup-node@2a017f350dbf6c4b6bb4508cc83809719115162e
+        uses: actions/setup-node@v3
         with:
           node-version: 18
           cache: yarn
@@ -52,7 +52,7 @@ jobs:
         id: diff
 
       # If index.js was different than expected, upload the expected version as an artifact
-      - uses: actions/upload-artifact@a8a3f3ad30e3422c9c7b888a15615d19a852ae32
+      - uses: actions/upload-artifact@v3
         if: ${{ failure() && steps.diff.conclusion == 'failure' }}
         with:
           name: dist
