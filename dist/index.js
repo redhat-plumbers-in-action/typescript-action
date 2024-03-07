@@ -1824,6 +1824,7485 @@ function isLoopbackAddress(host) {
 
 /***/ }),
 
+/***/ 334:
+/***/ ((module) => {
+
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  createTokenAuth: () => createTokenAuth
+});
+module.exports = __toCommonJS(dist_src_exports);
+
+// pkg/dist-src/auth.js
+var REGEX_IS_INSTALLATION_LEGACY = /^v1\./;
+var REGEX_IS_INSTALLATION = /^ghs_/;
+var REGEX_IS_USER_TO_SERVER = /^ghu_/;
+async function auth(token) {
+  const isApp = token.split(/\./).length === 3;
+  const isInstallation = REGEX_IS_INSTALLATION_LEGACY.test(token) || REGEX_IS_INSTALLATION.test(token);
+  const isUserToServer = REGEX_IS_USER_TO_SERVER.test(token);
+  const tokenType = isApp ? "app" : isInstallation ? "installation" : isUserToServer ? "user-to-server" : "oauth";
+  return {
+    type: "token",
+    token,
+    tokenType
+  };
+}
+
+// pkg/dist-src/with-authorization-prefix.js
+function withAuthorizationPrefix(token) {
+  if (token.split(/\./).length === 3) {
+    return `bearer ${token}`;
+  }
+  return `token ${token}`;
+}
+
+// pkg/dist-src/hook.js
+async function hook(token, request, route, parameters) {
+  const endpoint = request.endpoint.merge(
+    route,
+    parameters
+  );
+  endpoint.headers.authorization = withAuthorizationPrefix(token);
+  return request(endpoint);
+}
+
+// pkg/dist-src/index.js
+var createTokenAuth = function createTokenAuth2(token) {
+  if (!token) {
+    throw new Error("[@octokit/auth-token] No token passed to createTokenAuth");
+  }
+  if (typeof token !== "string") {
+    throw new Error(
+      "[@octokit/auth-token] Token passed to createTokenAuth is not a string"
+    );
+  }
+  token = token.replace(/^(token|bearer) +/i, "");
+  return Object.assign(auth.bind(null, token), {
+    hook: hook.bind(null, token)
+  });
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 6762:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  Octokit: () => Octokit
+});
+module.exports = __toCommonJS(dist_src_exports);
+var import_universal_user_agent = __nccwpck_require__(5030);
+var import_before_after_hook = __nccwpck_require__(3682);
+var import_request = __nccwpck_require__(6234);
+var import_graphql = __nccwpck_require__(8467);
+var import_auth_token = __nccwpck_require__(334);
+
+// pkg/dist-src/version.js
+var VERSION = "5.1.0";
+
+// pkg/dist-src/index.js
+var noop = () => {
+};
+var consoleWarn = console.warn.bind(console);
+var consoleError = console.error.bind(console);
+var userAgentTrail = `octokit-core.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`;
+var Octokit = class {
+  static {
+    this.VERSION = VERSION;
+  }
+  static defaults(defaults) {
+    const OctokitWithDefaults = class extends this {
+      constructor(...args) {
+        const options = args[0] || {};
+        if (typeof defaults === "function") {
+          super(defaults(options));
+          return;
+        }
+        super(
+          Object.assign(
+            {},
+            defaults,
+            options,
+            options.userAgent && defaults.userAgent ? {
+              userAgent: `${options.userAgent} ${defaults.userAgent}`
+            } : null
+          )
+        );
+      }
+    };
+    return OctokitWithDefaults;
+  }
+  static {
+    this.plugins = [];
+  }
+  /**
+   * Attach a plugin (or many) to your Octokit instance.
+   *
+   * @example
+   * const API = Octokit.plugin(plugin1, plugin2, plugin3, ...)
+   */
+  static plugin(...newPlugins) {
+    const currentPlugins = this.plugins;
+    const NewOctokit = class extends this {
+      static {
+        this.plugins = currentPlugins.concat(
+          newPlugins.filter((plugin) => !currentPlugins.includes(plugin))
+        );
+      }
+    };
+    return NewOctokit;
+  }
+  constructor(options = {}) {
+    const hook = new import_before_after_hook.Collection();
+    const requestDefaults = {
+      baseUrl: import_request.request.endpoint.DEFAULTS.baseUrl,
+      headers: {},
+      request: Object.assign({}, options.request, {
+        // @ts-ignore internal usage only, no need to type
+        hook: hook.bind(null, "request")
+      }),
+      mediaType: {
+        previews: [],
+        format: ""
+      }
+    };
+    requestDefaults.headers["user-agent"] = options.userAgent ? `${options.userAgent} ${userAgentTrail}` : userAgentTrail;
+    if (options.baseUrl) {
+      requestDefaults.baseUrl = options.baseUrl;
+    }
+    if (options.previews) {
+      requestDefaults.mediaType.previews = options.previews;
+    }
+    if (options.timeZone) {
+      requestDefaults.headers["time-zone"] = options.timeZone;
+    }
+    this.request = import_request.request.defaults(requestDefaults);
+    this.graphql = (0, import_graphql.withCustomRequest)(this.request).defaults(requestDefaults);
+    this.log = Object.assign(
+      {
+        debug: noop,
+        info: noop,
+        warn: consoleWarn,
+        error: consoleError
+      },
+      options.log
+    );
+    this.hook = hook;
+    if (!options.authStrategy) {
+      if (!options.auth) {
+        this.auth = async () => ({
+          type: "unauthenticated"
+        });
+      } else {
+        const auth = (0, import_auth_token.createTokenAuth)(options.auth);
+        hook.wrap("request", auth.hook);
+        this.auth = auth;
+      }
+    } else {
+      const { authStrategy, ...otherOptions } = options;
+      const auth = authStrategy(
+        Object.assign(
+          {
+            request: this.request,
+            log: this.log,
+            // we pass the current octokit instance as well as its constructor options
+            // to allow for authentication strategies that return a new octokit instance
+            // that shares the same internal state as the current one. The original
+            // requirement for this was the "event-octokit" authentication strategy
+            // of https://github.com/probot/octokit-auth-probot.
+            octokit: this,
+            octokitOptions: otherOptions
+          },
+          options.auth
+        )
+      );
+      hook.wrap("request", auth.hook);
+      this.auth = auth;
+    }
+    const classConstructor = this.constructor;
+    for (let i = 0; i < classConstructor.plugins.length; ++i) {
+      Object.assign(this, classConstructor.plugins[i](this, options));
+    }
+  }
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 9440:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  endpoint: () => endpoint
+});
+module.exports = __toCommonJS(dist_src_exports);
+
+// pkg/dist-src/defaults.js
+var import_universal_user_agent = __nccwpck_require__(5030);
+
+// pkg/dist-src/version.js
+var VERSION = "9.0.4";
+
+// pkg/dist-src/defaults.js
+var userAgent = `octokit-endpoint.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`;
+var DEFAULTS = {
+  method: "GET",
+  baseUrl: "https://api.github.com",
+  headers: {
+    accept: "application/vnd.github.v3+json",
+    "user-agent": userAgent
+  },
+  mediaType: {
+    format: ""
+  }
+};
+
+// pkg/dist-src/util/lowercase-keys.js
+function lowercaseKeys(object) {
+  if (!object) {
+    return {};
+  }
+  return Object.keys(object).reduce((newObj, key) => {
+    newObj[key.toLowerCase()] = object[key];
+    return newObj;
+  }, {});
+}
+
+// pkg/dist-src/util/is-plain-object.js
+function isPlainObject(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  if (Object.prototype.toString.call(value) !== "[object Object]")
+    return false;
+  const proto = Object.getPrototypeOf(value);
+  if (proto === null)
+    return true;
+  const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
+  return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
+}
+
+// pkg/dist-src/util/merge-deep.js
+function mergeDeep(defaults, options) {
+  const result = Object.assign({}, defaults);
+  Object.keys(options).forEach((key) => {
+    if (isPlainObject(options[key])) {
+      if (!(key in defaults))
+        Object.assign(result, { [key]: options[key] });
+      else
+        result[key] = mergeDeep(defaults[key], options[key]);
+    } else {
+      Object.assign(result, { [key]: options[key] });
+    }
+  });
+  return result;
+}
+
+// pkg/dist-src/util/remove-undefined-properties.js
+function removeUndefinedProperties(obj) {
+  for (const key in obj) {
+    if (obj[key] === void 0) {
+      delete obj[key];
+    }
+  }
+  return obj;
+}
+
+// pkg/dist-src/merge.js
+function merge(defaults, route, options) {
+  if (typeof route === "string") {
+    let [method, url] = route.split(" ");
+    options = Object.assign(url ? { method, url } : { url: method }, options);
+  } else {
+    options = Object.assign({}, route);
+  }
+  options.headers = lowercaseKeys(options.headers);
+  removeUndefinedProperties(options);
+  removeUndefinedProperties(options.headers);
+  const mergedOptions = mergeDeep(defaults || {}, options);
+  if (options.url === "/graphql") {
+    if (defaults && defaults.mediaType.previews?.length) {
+      mergedOptions.mediaType.previews = defaults.mediaType.previews.filter(
+        (preview) => !mergedOptions.mediaType.previews.includes(preview)
+      ).concat(mergedOptions.mediaType.previews);
+    }
+    mergedOptions.mediaType.previews = (mergedOptions.mediaType.previews || []).map((preview) => preview.replace(/-preview/, ""));
+  }
+  return mergedOptions;
+}
+
+// pkg/dist-src/util/add-query-parameters.js
+function addQueryParameters(url, parameters) {
+  const separator = /\?/.test(url) ? "&" : "?";
+  const names = Object.keys(parameters);
+  if (names.length === 0) {
+    return url;
+  }
+  return url + separator + names.map((name) => {
+    if (name === "q") {
+      return "q=" + parameters.q.split("+").map(encodeURIComponent).join("+");
+    }
+    return `${name}=${encodeURIComponent(parameters[name])}`;
+  }).join("&");
+}
+
+// pkg/dist-src/util/extract-url-variable-names.js
+var urlVariableRegex = /\{[^}]+\}/g;
+function removeNonChars(variableName) {
+  return variableName.replace(/^\W+|\W+$/g, "").split(/,/);
+}
+function extractUrlVariableNames(url) {
+  const matches = url.match(urlVariableRegex);
+  if (!matches) {
+    return [];
+  }
+  return matches.map(removeNonChars).reduce((a, b) => a.concat(b), []);
+}
+
+// pkg/dist-src/util/omit.js
+function omit(object, keysToOmit) {
+  const result = { __proto__: null };
+  for (const key of Object.keys(object)) {
+    if (keysToOmit.indexOf(key) === -1) {
+      result[key] = object[key];
+    }
+  }
+  return result;
+}
+
+// pkg/dist-src/util/url-template.js
+function encodeReserved(str) {
+  return str.split(/(%[0-9A-Fa-f]{2})/g).map(function(part) {
+    if (!/%[0-9A-Fa-f]/.test(part)) {
+      part = encodeURI(part).replace(/%5B/g, "[").replace(/%5D/g, "]");
+    }
+    return part;
+  }).join("");
+}
+function encodeUnreserved(str) {
+  return encodeURIComponent(str).replace(/[!'()*]/g, function(c) {
+    return "%" + c.charCodeAt(0).toString(16).toUpperCase();
+  });
+}
+function encodeValue(operator, value, key) {
+  value = operator === "+" || operator === "#" ? encodeReserved(value) : encodeUnreserved(value);
+  if (key) {
+    return encodeUnreserved(key) + "=" + value;
+  } else {
+    return value;
+  }
+}
+function isDefined(value) {
+  return value !== void 0 && value !== null;
+}
+function isKeyOperator(operator) {
+  return operator === ";" || operator === "&" || operator === "?";
+}
+function getValues(context, operator, key, modifier) {
+  var value = context[key], result = [];
+  if (isDefined(value) && value !== "") {
+    if (typeof value === "string" || typeof value === "number" || typeof value === "boolean") {
+      value = value.toString();
+      if (modifier && modifier !== "*") {
+        value = value.substring(0, parseInt(modifier, 10));
+      }
+      result.push(
+        encodeValue(operator, value, isKeyOperator(operator) ? key : "")
+      );
+    } else {
+      if (modifier === "*") {
+        if (Array.isArray(value)) {
+          value.filter(isDefined).forEach(function(value2) {
+            result.push(
+              encodeValue(operator, value2, isKeyOperator(operator) ? key : "")
+            );
+          });
+        } else {
+          Object.keys(value).forEach(function(k) {
+            if (isDefined(value[k])) {
+              result.push(encodeValue(operator, value[k], k));
+            }
+          });
+        }
+      } else {
+        const tmp = [];
+        if (Array.isArray(value)) {
+          value.filter(isDefined).forEach(function(value2) {
+            tmp.push(encodeValue(operator, value2));
+          });
+        } else {
+          Object.keys(value).forEach(function(k) {
+            if (isDefined(value[k])) {
+              tmp.push(encodeUnreserved(k));
+              tmp.push(encodeValue(operator, value[k].toString()));
+            }
+          });
+        }
+        if (isKeyOperator(operator)) {
+          result.push(encodeUnreserved(key) + "=" + tmp.join(","));
+        } else if (tmp.length !== 0) {
+          result.push(tmp.join(","));
+        }
+      }
+    }
+  } else {
+    if (operator === ";") {
+      if (isDefined(value)) {
+        result.push(encodeUnreserved(key));
+      }
+    } else if (value === "" && (operator === "&" || operator === "?")) {
+      result.push(encodeUnreserved(key) + "=");
+    } else if (value === "") {
+      result.push("");
+    }
+  }
+  return result;
+}
+function parseUrl(template) {
+  return {
+    expand: expand.bind(null, template)
+  };
+}
+function expand(template, context) {
+  var operators = ["+", "#", ".", "/", ";", "?", "&"];
+  template = template.replace(
+    /\{([^\{\}]+)\}|([^\{\}]+)/g,
+    function(_, expression, literal) {
+      if (expression) {
+        let operator = "";
+        const values = [];
+        if (operators.indexOf(expression.charAt(0)) !== -1) {
+          operator = expression.charAt(0);
+          expression = expression.substr(1);
+        }
+        expression.split(/,/g).forEach(function(variable) {
+          var tmp = /([^:\*]*)(?::(\d+)|(\*))?/.exec(variable);
+          values.push(getValues(context, operator, tmp[1], tmp[2] || tmp[3]));
+        });
+        if (operator && operator !== "+") {
+          var separator = ",";
+          if (operator === "?") {
+            separator = "&";
+          } else if (operator !== "#") {
+            separator = operator;
+          }
+          return (values.length !== 0 ? operator : "") + values.join(separator);
+        } else {
+          return values.join(",");
+        }
+      } else {
+        return encodeReserved(literal);
+      }
+    }
+  );
+  if (template === "/") {
+    return template;
+  } else {
+    return template.replace(/\/$/, "");
+  }
+}
+
+// pkg/dist-src/parse.js
+function parse(options) {
+  let method = options.method.toUpperCase();
+  let url = (options.url || "/").replace(/:([a-z]\w+)/g, "{$1}");
+  let headers = Object.assign({}, options.headers);
+  let body;
+  let parameters = omit(options, [
+    "method",
+    "baseUrl",
+    "url",
+    "headers",
+    "request",
+    "mediaType"
+  ]);
+  const urlVariableNames = extractUrlVariableNames(url);
+  url = parseUrl(url).expand(parameters);
+  if (!/^http/.test(url)) {
+    url = options.baseUrl + url;
+  }
+  const omittedParameters = Object.keys(options).filter((option) => urlVariableNames.includes(option)).concat("baseUrl");
+  const remainingParameters = omit(parameters, omittedParameters);
+  const isBinaryRequest = /application\/octet-stream/i.test(headers.accept);
+  if (!isBinaryRequest) {
+    if (options.mediaType.format) {
+      headers.accept = headers.accept.split(/,/).map(
+        (format) => format.replace(
+          /application\/vnd(\.\w+)(\.v3)?(\.\w+)?(\+json)?$/,
+          `application/vnd$1$2.${options.mediaType.format}`
+        )
+      ).join(",");
+    }
+    if (url.endsWith("/graphql")) {
+      if (options.mediaType.previews?.length) {
+        const previewsFromAcceptHeader = headers.accept.match(/[\w-]+(?=-preview)/g) || [];
+        headers.accept = previewsFromAcceptHeader.concat(options.mediaType.previews).map((preview) => {
+          const format = options.mediaType.format ? `.${options.mediaType.format}` : "+json";
+          return `application/vnd.github.${preview}-preview${format}`;
+        }).join(",");
+      }
+    }
+  }
+  if (["GET", "HEAD"].includes(method)) {
+    url = addQueryParameters(url, remainingParameters);
+  } else {
+    if ("data" in remainingParameters) {
+      body = remainingParameters.data;
+    } else {
+      if (Object.keys(remainingParameters).length) {
+        body = remainingParameters;
+      }
+    }
+  }
+  if (!headers["content-type"] && typeof body !== "undefined") {
+    headers["content-type"] = "application/json; charset=utf-8";
+  }
+  if (["PATCH", "PUT"].includes(method) && typeof body === "undefined") {
+    body = "";
+  }
+  return Object.assign(
+    { method, url, headers },
+    typeof body !== "undefined" ? { body } : null,
+    options.request ? { request: options.request } : null
+  );
+}
+
+// pkg/dist-src/endpoint-with-defaults.js
+function endpointWithDefaults(defaults, route, options) {
+  return parse(merge(defaults, route, options));
+}
+
+// pkg/dist-src/with-defaults.js
+function withDefaults(oldDefaults, newDefaults) {
+  const DEFAULTS2 = merge(oldDefaults, newDefaults);
+  const endpoint2 = endpointWithDefaults.bind(null, DEFAULTS2);
+  return Object.assign(endpoint2, {
+    DEFAULTS: DEFAULTS2,
+    defaults: withDefaults.bind(null, DEFAULTS2),
+    merge: merge.bind(null, DEFAULTS2),
+    parse
+  });
+}
+
+// pkg/dist-src/index.js
+var endpoint = withDefaults(null, DEFAULTS);
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 8467:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  GraphqlResponseError: () => GraphqlResponseError,
+  graphql: () => graphql2,
+  withCustomRequest: () => withCustomRequest
+});
+module.exports = __toCommonJS(dist_src_exports);
+var import_request3 = __nccwpck_require__(6234);
+var import_universal_user_agent = __nccwpck_require__(5030);
+
+// pkg/dist-src/version.js
+var VERSION = "7.0.2";
+
+// pkg/dist-src/with-defaults.js
+var import_request2 = __nccwpck_require__(6234);
+
+// pkg/dist-src/graphql.js
+var import_request = __nccwpck_require__(6234);
+
+// pkg/dist-src/error.js
+function _buildMessageForResponseErrors(data) {
+  return `Request failed due to following response errors:
+` + data.errors.map((e) => ` - ${e.message}`).join("\n");
+}
+var GraphqlResponseError = class extends Error {
+  constructor(request2, headers, response) {
+    super(_buildMessageForResponseErrors(response));
+    this.request = request2;
+    this.headers = headers;
+    this.response = response;
+    this.name = "GraphqlResponseError";
+    this.errors = response.errors;
+    this.data = response.data;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+  }
+};
+
+// pkg/dist-src/graphql.js
+var NON_VARIABLE_OPTIONS = [
+  "method",
+  "baseUrl",
+  "url",
+  "headers",
+  "request",
+  "query",
+  "mediaType"
+];
+var FORBIDDEN_VARIABLE_OPTIONS = ["query", "method", "url"];
+var GHES_V3_SUFFIX_REGEX = /\/api\/v3\/?$/;
+function graphql(request2, query, options) {
+  if (options) {
+    if (typeof query === "string" && "query" in options) {
+      return Promise.reject(
+        new Error(`[@octokit/graphql] "query" cannot be used as variable name`)
+      );
+    }
+    for (const key in options) {
+      if (!FORBIDDEN_VARIABLE_OPTIONS.includes(key))
+        continue;
+      return Promise.reject(
+        new Error(
+          `[@octokit/graphql] "${key}" cannot be used as variable name`
+        )
+      );
+    }
+  }
+  const parsedOptions = typeof query === "string" ? Object.assign({ query }, options) : query;
+  const requestOptions = Object.keys(
+    parsedOptions
+  ).reduce((result, key) => {
+    if (NON_VARIABLE_OPTIONS.includes(key)) {
+      result[key] = parsedOptions[key];
+      return result;
+    }
+    if (!result.variables) {
+      result.variables = {};
+    }
+    result.variables[key] = parsedOptions[key];
+    return result;
+  }, {});
+  const baseUrl = parsedOptions.baseUrl || request2.endpoint.DEFAULTS.baseUrl;
+  if (GHES_V3_SUFFIX_REGEX.test(baseUrl)) {
+    requestOptions.url = baseUrl.replace(GHES_V3_SUFFIX_REGEX, "/api/graphql");
+  }
+  return request2(requestOptions).then((response) => {
+    if (response.data.errors) {
+      const headers = {};
+      for (const key of Object.keys(response.headers)) {
+        headers[key] = response.headers[key];
+      }
+      throw new GraphqlResponseError(
+        requestOptions,
+        headers,
+        response.data
+      );
+    }
+    return response.data.data;
+  });
+}
+
+// pkg/dist-src/with-defaults.js
+function withDefaults(request2, newDefaults) {
+  const newRequest = request2.defaults(newDefaults);
+  const newApi = (query, options) => {
+    return graphql(newRequest, query, options);
+  };
+  return Object.assign(newApi, {
+    defaults: withDefaults.bind(null, newRequest),
+    endpoint: newRequest.endpoint
+  });
+}
+
+// pkg/dist-src/index.js
+var graphql2 = withDefaults(import_request3.request, {
+  headers: {
+    "user-agent": `octokit-graphql.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`
+  },
+  method: "POST",
+  url: "/graphql"
+});
+function withCustomRequest(customRequest) {
+  return withDefaults(customRequest, {
+    method: "POST",
+    url: "/graphql"
+  });
+}
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 9968:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  throttling: () => throttling
+});
+module.exports = __toCommonJS(dist_src_exports);
+var import_light = __toESM(__nccwpck_require__(1174));
+var import_core = __nccwpck_require__(6762);
+
+// pkg/dist-src/version.js
+var VERSION = "8.2.0";
+
+// pkg/dist-src/wrap-request.js
+var noop = () => Promise.resolve();
+function wrapRequest(state, request, options) {
+  return state.retryLimiter.schedule(doRequest, state, request, options);
+}
+async function doRequest(state, request, options) {
+  const isWrite = options.method !== "GET" && options.method !== "HEAD";
+  const { pathname } = new URL(options.url, "http://github.test");
+  const isSearch = options.method === "GET" && pathname.startsWith("/search/");
+  const isGraphQL = pathname.startsWith("/graphql");
+  const retryCount = ~~request.retryCount;
+  const jobOptions = retryCount > 0 ? { priority: 0, weight: 0 } : {};
+  if (state.clustering) {
+    jobOptions.expiration = 1e3 * 60;
+  }
+  if (isWrite || isGraphQL) {
+    await state.write.key(state.id).schedule(jobOptions, noop);
+  }
+  if (isWrite && state.triggersNotification(pathname)) {
+    await state.notifications.key(state.id).schedule(jobOptions, noop);
+  }
+  if (isSearch) {
+    await state.search.key(state.id).schedule(jobOptions, noop);
+  }
+  const req = state.global.key(state.id).schedule(jobOptions, request, options);
+  if (isGraphQL) {
+    const res = await req;
+    if (res.data.errors != null && res.data.errors.some((error) => error.type === "RATE_LIMITED")) {
+      const error = Object.assign(new Error("GraphQL Rate Limit Exceeded"), {
+        response: res,
+        data: res.data
+      });
+      throw error;
+    }
+  }
+  return req;
+}
+
+// pkg/dist-src/generated/triggers-notification-paths.js
+var triggers_notification_paths_default = [
+  "/orgs/{org}/invitations",
+  "/orgs/{org}/invitations/{invitation_id}",
+  "/orgs/{org}/teams/{team_slug}/discussions",
+  "/orgs/{org}/teams/{team_slug}/discussions/{discussion_number}/comments",
+  "/repos/{owner}/{repo}/collaborators/{username}",
+  "/repos/{owner}/{repo}/commits/{commit_sha}/comments",
+  "/repos/{owner}/{repo}/issues",
+  "/repos/{owner}/{repo}/issues/{issue_number}/comments",
+  "/repos/{owner}/{repo}/pulls",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/comments",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/comments/{comment_id}/replies",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/merge",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/requested_reviewers",
+  "/repos/{owner}/{repo}/pulls/{pull_number}/reviews",
+  "/repos/{owner}/{repo}/releases",
+  "/teams/{team_id}/discussions",
+  "/teams/{team_id}/discussions/{discussion_number}/comments"
+];
+
+// pkg/dist-src/route-matcher.js
+function routeMatcher(paths) {
+  const regexes = paths.map(
+    (path) => path.split("/").map((c) => c.startsWith("{") ? "(?:.+?)" : c).join("/")
+  );
+  const regex2 = `^(?:${regexes.map((r) => `(?:${r})`).join("|")})[^/]*$`;
+  return new RegExp(regex2, "i");
+}
+
+// pkg/dist-src/index.js
+var regex = routeMatcher(triggers_notification_paths_default);
+var triggersNotification = regex.test.bind(regex);
+var groups = {};
+var createGroups = function(Bottleneck, common) {
+  groups.global = new Bottleneck.Group({
+    id: "octokit-global",
+    maxConcurrent: 10,
+    ...common
+  });
+  groups.search = new Bottleneck.Group({
+    id: "octokit-search",
+    maxConcurrent: 1,
+    minTime: 2e3,
+    ...common
+  });
+  groups.write = new Bottleneck.Group({
+    id: "octokit-write",
+    maxConcurrent: 1,
+    minTime: 1e3,
+    ...common
+  });
+  groups.notifications = new Bottleneck.Group({
+    id: "octokit-notifications",
+    maxConcurrent: 1,
+    minTime: 3e3,
+    ...common
+  });
+};
+function throttling(octokit, octokitOptions) {
+  const {
+    enabled = true,
+    Bottleneck = import_light.default,
+    id = "no-id",
+    timeout = 1e3 * 60 * 2,
+    // Redis TTL: 2 minutes
+    connection
+  } = octokitOptions.throttle || {};
+  if (!enabled) {
+    return {};
+  }
+  const common = { connection, timeout };
+  if (groups.global == null) {
+    createGroups(Bottleneck, common);
+  }
+  const state = Object.assign(
+    {
+      clustering: connection != null,
+      triggersNotification,
+      fallbackSecondaryRateRetryAfter: 60,
+      retryAfterBaseValue: 1e3,
+      retryLimiter: new Bottleneck(),
+      id,
+      ...groups
+    },
+    octokitOptions.throttle
+  );
+  if (typeof state.onSecondaryRateLimit !== "function" || typeof state.onRateLimit !== "function") {
+    throw new Error(`octokit/plugin-throttling error:
+        You must pass the onSecondaryRateLimit and onRateLimit error handlers.
+        See https://octokit.github.io/rest.js/#throttling
+
+        const octokit = new Octokit({
+          throttle: {
+            onSecondaryRateLimit: (retryAfter, options) => {/* ... */},
+            onRateLimit: (retryAfter, options) => {/* ... */}
+          }
+        })
+    `);
+  }
+  const events = {};
+  const emitter = new Bottleneck.Events(events);
+  events.on("secondary-limit", state.onSecondaryRateLimit);
+  events.on("rate-limit", state.onRateLimit);
+  events.on(
+    "error",
+    (e) => octokit.log.warn("Error in throttling-plugin limit handler", e)
+  );
+  state.retryLimiter.on("failed", async function(error, info) {
+    const [state2, request, options] = info.args;
+    const { pathname } = new URL(options.url, "http://github.test");
+    const shouldRetryGraphQL = pathname.startsWith("/graphql") && error.status !== 401;
+    if (!(shouldRetryGraphQL || error.status === 403)) {
+      return;
+    }
+    const retryCount = ~~request.retryCount;
+    request.retryCount = retryCount;
+    options.request.retryCount = retryCount;
+    const { wantRetry, retryAfter = 0 } = await async function() {
+      if (/\bsecondary rate\b/i.test(error.message)) {
+        const retryAfter2 = Number(error.response.headers["retry-after"]) || state2.fallbackSecondaryRateRetryAfter;
+        const wantRetry2 = await emitter.trigger(
+          "secondary-limit",
+          retryAfter2,
+          options,
+          octokit,
+          retryCount
+        );
+        return { wantRetry: wantRetry2, retryAfter: retryAfter2 };
+      }
+      if (error.response.headers != null && error.response.headers["x-ratelimit-remaining"] === "0" || (error.response.data?.errors ?? []).some(
+        (error2) => error2.type === "RATE_LIMITED"
+      )) {
+        const rateLimitReset = new Date(
+          ~~error.response.headers["x-ratelimit-reset"] * 1e3
+        ).getTime();
+        const retryAfter2 = Math.max(
+          // Add one second so we retry _after_ the reset time
+          // https://docs.github.com/en/rest/overview/resources-in-the-rest-api?apiVersion=2022-11-28#exceeding-the-rate-limit
+          Math.ceil((rateLimitReset - Date.now()) / 1e3) + 1,
+          0
+        );
+        const wantRetry2 = await emitter.trigger(
+          "rate-limit",
+          retryAfter2,
+          options,
+          octokit,
+          retryCount
+        );
+        return { wantRetry: wantRetry2, retryAfter: retryAfter2 };
+      }
+      return {};
+    }();
+    if (wantRetry) {
+      request.retryCount++;
+      return retryAfter * state2.retryAfterBaseValue;
+    }
+  });
+  octokit.hook.wrap("request", wrapRequest.bind(null, state));
+  return {};
+}
+throttling.VERSION = VERSION;
+throttling.triggersNotification = triggersNotification;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 537:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  RequestError: () => RequestError
+});
+module.exports = __toCommonJS(dist_src_exports);
+var import_deprecation = __nccwpck_require__(8932);
+var import_once = __toESM(__nccwpck_require__(1223));
+var logOnceCode = (0, import_once.default)((deprecation) => console.warn(deprecation));
+var logOnceHeaders = (0, import_once.default)((deprecation) => console.warn(deprecation));
+var RequestError = class extends Error {
+  constructor(message, statusCode, options) {
+    super(message);
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+    this.name = "HttpError";
+    this.status = statusCode;
+    let headers;
+    if ("headers" in options && typeof options.headers !== "undefined") {
+      headers = options.headers;
+    }
+    if ("response" in options) {
+      this.response = options.response;
+      headers = options.response.headers;
+    }
+    const requestCopy = Object.assign({}, options.request);
+    if (options.request.headers.authorization) {
+      requestCopy.headers = Object.assign({}, options.request.headers, {
+        authorization: options.request.headers.authorization.replace(
+          / .*$/,
+          " [REDACTED]"
+        )
+      });
+    }
+    requestCopy.url = requestCopy.url.replace(/\bclient_secret=\w+/g, "client_secret=[REDACTED]").replace(/\baccess_token=\w+/g, "access_token=[REDACTED]");
+    this.request = requestCopy;
+    Object.defineProperty(this, "code", {
+      get() {
+        logOnceCode(
+          new import_deprecation.Deprecation(
+            "[@octokit/request-error] `error.code` is deprecated, use `error.status`."
+          )
+        );
+        return statusCode;
+      }
+    });
+    Object.defineProperty(this, "headers", {
+      get() {
+        logOnceHeaders(
+          new import_deprecation.Deprecation(
+            "[@octokit/request-error] `error.headers` is deprecated, use `error.response.headers`."
+          )
+        );
+        return headers || {};
+      }
+    });
+  }
+};
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 6234:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  request: () => request
+});
+module.exports = __toCommonJS(dist_src_exports);
+var import_endpoint = __nccwpck_require__(9440);
+var import_universal_user_agent = __nccwpck_require__(5030);
+
+// pkg/dist-src/version.js
+var VERSION = "8.2.0";
+
+// pkg/dist-src/is-plain-object.js
+function isPlainObject(value) {
+  if (typeof value !== "object" || value === null)
+    return false;
+  if (Object.prototype.toString.call(value) !== "[object Object]")
+    return false;
+  const proto = Object.getPrototypeOf(value);
+  if (proto === null)
+    return true;
+  const Ctor = Object.prototype.hasOwnProperty.call(proto, "constructor") && proto.constructor;
+  return typeof Ctor === "function" && Ctor instanceof Ctor && Function.prototype.call(Ctor) === Function.prototype.call(value);
+}
+
+// pkg/dist-src/fetch-wrapper.js
+var import_request_error = __nccwpck_require__(537);
+
+// pkg/dist-src/get-buffer-response.js
+function getBufferResponse(response) {
+  return response.arrayBuffer();
+}
+
+// pkg/dist-src/fetch-wrapper.js
+function fetchWrapper(requestOptions) {
+  var _a, _b, _c;
+  const log = requestOptions.request && requestOptions.request.log ? requestOptions.request.log : console;
+  const parseSuccessResponseBody = ((_a = requestOptions.request) == null ? void 0 : _a.parseSuccessResponseBody) !== false;
+  if (isPlainObject(requestOptions.body) || Array.isArray(requestOptions.body)) {
+    requestOptions.body = JSON.stringify(requestOptions.body);
+  }
+  let headers = {};
+  let status;
+  let url;
+  let { fetch } = globalThis;
+  if ((_b = requestOptions.request) == null ? void 0 : _b.fetch) {
+    fetch = requestOptions.request.fetch;
+  }
+  if (!fetch) {
+    throw new Error(
+      "fetch is not set. Please pass a fetch implementation as new Octokit({ request: { fetch }}). Learn more at https://github.com/octokit/octokit.js/#fetch-missing"
+    );
+  }
+  return fetch(requestOptions.url, {
+    method: requestOptions.method,
+    body: requestOptions.body,
+    headers: requestOptions.headers,
+    signal: (_c = requestOptions.request) == null ? void 0 : _c.signal,
+    // duplex must be set if request.body is ReadableStream or Async Iterables.
+    // See https://fetch.spec.whatwg.org/#dom-requestinit-duplex.
+    ...requestOptions.body && { duplex: "half" }
+  }).then(async (response) => {
+    url = response.url;
+    status = response.status;
+    for (const keyAndValue of response.headers) {
+      headers[keyAndValue[0]] = keyAndValue[1];
+    }
+    if ("deprecation" in headers) {
+      const matches = headers.link && headers.link.match(/<([^>]+)>; rel="deprecation"/);
+      const deprecationLink = matches && matches.pop();
+      log.warn(
+        `[@octokit/request] "${requestOptions.method} ${requestOptions.url}" is deprecated. It is scheduled to be removed on ${headers.sunset}${deprecationLink ? `. See ${deprecationLink}` : ""}`
+      );
+    }
+    if (status === 204 || status === 205) {
+      return;
+    }
+    if (requestOptions.method === "HEAD") {
+      if (status < 400) {
+        return;
+      }
+      throw new import_request_error.RequestError(response.statusText, status, {
+        response: {
+          url,
+          status,
+          headers,
+          data: void 0
+        },
+        request: requestOptions
+      });
+    }
+    if (status === 304) {
+      throw new import_request_error.RequestError("Not modified", status, {
+        response: {
+          url,
+          status,
+          headers,
+          data: await getResponseData(response)
+        },
+        request: requestOptions
+      });
+    }
+    if (status >= 400) {
+      const data = await getResponseData(response);
+      const error = new import_request_error.RequestError(toErrorMessage(data), status, {
+        response: {
+          url,
+          status,
+          headers,
+          data
+        },
+        request: requestOptions
+      });
+      throw error;
+    }
+    return parseSuccessResponseBody ? await getResponseData(response) : response.body;
+  }).then((data) => {
+    return {
+      status,
+      url,
+      headers,
+      data
+    };
+  }).catch((error) => {
+    if (error instanceof import_request_error.RequestError)
+      throw error;
+    else if (error.name === "AbortError")
+      throw error;
+    let message = error.message;
+    if (error.name === "TypeError" && "cause" in error) {
+      if (error.cause instanceof Error) {
+        message = error.cause.message;
+      } else if (typeof error.cause === "string") {
+        message = error.cause;
+      }
+    }
+    throw new import_request_error.RequestError(message, 500, {
+      request: requestOptions
+    });
+  });
+}
+async function getResponseData(response) {
+  const contentType = response.headers.get("content-type");
+  if (/application\/json/.test(contentType)) {
+    return response.json().catch(() => response.text()).catch(() => "");
+  }
+  if (!contentType || /^text\/|charset=utf-8$/.test(contentType)) {
+    return response.text();
+  }
+  return getBufferResponse(response);
+}
+function toErrorMessage(data) {
+  if (typeof data === "string")
+    return data;
+  let suffix;
+  if ("documentation_url" in data) {
+    suffix = ` - ${data.documentation_url}`;
+  } else {
+    suffix = "";
+  }
+  if ("message" in data) {
+    if (Array.isArray(data.errors)) {
+      return `${data.message}: ${data.errors.map(JSON.stringify).join(", ")}${suffix}`;
+    }
+    return `${data.message}${suffix}`;
+  }
+  return `Unknown error: ${JSON.stringify(data)}`;
+}
+
+// pkg/dist-src/with-defaults.js
+function withDefaults(oldEndpoint, newDefaults) {
+  const endpoint2 = oldEndpoint.defaults(newDefaults);
+  const newApi = function(route, parameters) {
+    const endpointOptions = endpoint2.merge(route, parameters);
+    if (!endpointOptions.request || !endpointOptions.request.hook) {
+      return fetchWrapper(endpoint2.parse(endpointOptions));
+    }
+    const request2 = (route2, parameters2) => {
+      return fetchWrapper(
+        endpoint2.parse(endpoint2.merge(route2, parameters2))
+      );
+    };
+    Object.assign(request2, {
+      endpoint: endpoint2,
+      defaults: withDefaults.bind(null, endpoint2)
+    });
+    return endpointOptions.request.hook(request2, endpointOptions);
+  };
+  return Object.assign(newApi, {
+    endpoint: endpoint2,
+    defaults: withDefaults.bind(null, endpoint2)
+  });
+}
+
+// pkg/dist-src/index.js
+var request = withDefaults(import_endpoint.endpoint, {
+  headers: {
+    "user-agent": `octokit-request.js/${VERSION} ${(0, import_universal_user_agent.getUserAgent)()}`
+  }
+});
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 9326:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+var __create = Object.create;
+var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __getProtoOf = Object.getPrototypeOf;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(
+  // If the importer is in node compatibility mode or this is not an ESM
+  // file that has been converted to a CommonJS file using a Babel-
+  // compatible transform (i.e. "__esModule" has not been set), then set
+  // "default" to the CommonJS "module.exports" for node compatibility.
+  isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target,
+  mod
+));
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// pkg/dist-src/index.js
+var dist_src_exports = {};
+__export(dist_src_exports, {
+  composeConfigGet: () => composeConfigGet,
+  config: () => config
+});
+module.exports = __toCommonJS(dist_src_exports);
+var import_core4 = __nccwpck_require__(6762);
+
+// pkg/dist-src/version.js
+var VERSION = "2.0.1";
+
+// pkg/dist-src/compose-config-get.js
+var import_core3 = __nccwpck_require__(6762);
+
+// pkg/dist-src/util/get-config-files.js
+var import_core2 = __nccwpck_require__(6762);
+
+// pkg/dist-src/util/get-config-file.js
+var import_core = __nccwpck_require__(6762);
+var import_js_yaml = __toESM(__nccwpck_require__(1917));
+var SUPPORTED_FILE_EXTENSIONS = ["json", "yml", "yaml"];
+async function getConfigFile(octokit, { owner, repo, path, ref }) {
+  const fileExtension = path.split(".").pop().toLowerCase();
+  if (!SUPPORTED_FILE_EXTENSIONS.includes(fileExtension)) {
+    throw new Error(
+      `[@probot/octokit-plugin-config] .${fileExtension} extension is not support for configuration (path: "${path}")`
+    );
+  }
+  const endpoint = {
+    method: "GET",
+    url: "/repos/{owner}/{repo}/contents/{path}",
+    owner,
+    repo,
+    path,
+    mediaType: {
+      format: "raw"
+    },
+    // this can be just `ref` once https://github.com/octokit/endpoint.js/issues/206 is resolved
+    ...ref ? { ref } : {}
+  };
+  const { url } = await octokit.request.endpoint(endpoint);
+  const emptyConfigResult = {
+    owner,
+    repo,
+    path,
+    url,
+    config: null
+  };
+  try {
+    const { data, headers } = await octokit.request(endpoint);
+    if (headers["content-type"] === "application/json; charset=utf-8") {
+      throw new Error(
+        `[@probot/octokit-plugin-config] ${url} exists, but is either a directory or a submodule. Ignoring.`
+      );
+    }
+    if (fileExtension === "json") {
+      if (typeof data === "string") {
+        throw new Error(
+          `[@probot/octokit-plugin-config] Configuration could not be parsed from ${url} (invalid JSON)`
+        );
+      }
+      return {
+        ...emptyConfigResult,
+        config: data
+      };
+    }
+    const config2 = import_js_yaml.default.load(data) || {};
+    if (typeof config2 === "string") {
+      throw new Error(
+        `[@probot/octokit-plugin-config] Configuration could not be parsed from ${url} (YAML is not an object)`
+      );
+    }
+    return {
+      ...emptyConfigResult,
+      config: config2
+    };
+  } catch (error) {
+    if (error.status === 404) {
+      return emptyConfigResult;
+    }
+    if (error.name === "YAMLException") {
+      const reason = /unknown tag/.test(error.message) ? "unsafe YAML" : "invalid YAML";
+      throw new Error(
+        `[@probot/octokit-plugin-config] Configuration could not be parsed from ${url} (${reason})`
+      );
+    }
+    throw error;
+  }
+}
+
+// pkg/dist-src/util/extends-to-get-content-params.js
+var EXTENDS_REGEX = new RegExp(
+  "^(?:([a-z\\d](?:[a-z\\d]|-(?=[a-z\\d])){0,38})/)?([-_.\\w\\d]+)(?::([-_./\\w\\d]+\\.ya?ml))?$",
+  "i"
+);
+function extendsToGetContentParams({
+  owner,
+  path,
+  url,
+  extendsValue
+}) {
+  if (typeof extendsValue !== "string") {
+    throw new Error(
+      `[@probot/octokit-plugin-config] Invalid value ${JSON.stringify(
+        extendsValue
+      )} for _extends in ${url}`
+    );
+  }
+  const match = extendsValue.match(EXTENDS_REGEX);
+  if (match === null) {
+    throw new Error(
+      `[@probot/octokit-plugin-config] Invalid value "${extendsValue}" for _extends in ${url}`
+    );
+  }
+  return {
+    owner: match[1] || owner,
+    repo: match[2],
+    path: match[3] || path
+  };
+}
+
+// pkg/dist-src/util/get-config-files.js
+async function getConfigFiles(octokit, { owner, repo, path, branch }) {
+  const requestedRepoFile = await getConfigFile(octokit, {
+    owner,
+    repo,
+    path,
+    ref: branch
+  });
+  const files = [requestedRepoFile];
+  if (!requestedRepoFile.config) {
+    if (repo === ".github") {
+      return files;
+    }
+    const defaultRepoConfig = await getConfigFile(octokit, {
+      owner,
+      repo: ".github",
+      path
+    });
+    files.push(defaultRepoConfig);
+  }
+  const file = files[files.length - 1];
+  if (!file.config || !file.config._extends) {
+    return files;
+  }
+  let extendConfigOptions = extendsToGetContentParams({
+    owner,
+    path,
+    url: file.url,
+    extendsValue: file.config._extends
+  });
+  delete file.config._extends;
+  do {
+    const extendRepoConfig = await getConfigFile(octokit, extendConfigOptions);
+    files.push(extendRepoConfig);
+    if (!extendRepoConfig.config || !extendRepoConfig.config._extends) {
+      return files;
+    }
+    extendConfigOptions = extendsToGetContentParams({
+      owner,
+      path,
+      url: extendRepoConfig.url,
+      extendsValue: extendRepoConfig.config._extends
+    });
+    delete extendRepoConfig.config._extends;
+    const alreadyLoaded = files.find(
+      (file2) => file2.owner === extendConfigOptions.owner && file2.repo === extendConfigOptions.repo && file2.path === extendConfigOptions.path
+    );
+    if (alreadyLoaded) {
+      throw new Error(
+        `[@probot/octokit-plugin-config] Recursion detected. Ignoring  "_extends: ${extendRepoConfig.config._extends}" from ${extendRepoConfig.url} because ${alreadyLoaded.url} was already loaded.`
+      );
+    }
+  } while (true);
+}
+
+// pkg/dist-src/compose-config-get.js
+async function composeConfigGet(octokit, { owner, repo, defaults, path, branch }) {
+  const files = await getConfigFiles(octokit, {
+    owner,
+    repo,
+    path,
+    branch
+  });
+  const configs = files.map((file) => file.config).reverse().filter(Boolean);
+  return {
+    files,
+    config: typeof defaults === "function" ? defaults(configs) : Object.assign({}, defaults, ...configs)
+  };
+}
+
+// pkg/dist-src/index.js
+function config(octokit) {
+  return {
+    config: {
+      async get(options) {
+        return composeConfigGet(octokit, options);
+      }
+    }
+  };
+}
+config.VERSION = VERSION;
+// Annotate the CommonJS export names for ESM import in node:
+0 && (0);
+
+
+/***/ }),
+
+/***/ 3682:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var register = __nccwpck_require__(4670);
+var addHook = __nccwpck_require__(5549);
+var removeHook = __nccwpck_require__(6819);
+
+// bind with array of arguments: https://stackoverflow.com/a/21792913
+var bind = Function.bind;
+var bindable = bind.bind(bind);
+
+function bindApi(hook, state, name) {
+  var removeHookRef = bindable(removeHook, null).apply(
+    null,
+    name ? [state, name] : [state]
+  );
+  hook.api = { remove: removeHookRef };
+  hook.remove = removeHookRef;
+  ["before", "error", "after", "wrap"].forEach(function (kind) {
+    var args = name ? [state, kind, name] : [state, kind];
+    hook[kind] = hook.api[kind] = bindable(addHook, null).apply(null, args);
+  });
+}
+
+function HookSingular() {
+  var singularHookName = "h";
+  var singularHookState = {
+    registry: {},
+  };
+  var singularHook = register.bind(null, singularHookState, singularHookName);
+  bindApi(singularHook, singularHookState, singularHookName);
+  return singularHook;
+}
+
+function HookCollection() {
+  var state = {
+    registry: {},
+  };
+
+  var hook = register.bind(null, state);
+  bindApi(hook, state);
+
+  return hook;
+}
+
+var collectionHookDeprecationMessageDisplayed = false;
+function Hook() {
+  if (!collectionHookDeprecationMessageDisplayed) {
+    console.warn(
+      '[before-after-hook]: "Hook()" repurposing warning, use "Hook.Collection()". Read more: https://git.io/upgrade-before-after-hook-to-1.4'
+    );
+    collectionHookDeprecationMessageDisplayed = true;
+  }
+  return HookCollection();
+}
+
+Hook.Singular = HookSingular.bind();
+Hook.Collection = HookCollection.bind();
+
+module.exports = Hook;
+// expose constructors as a named property for TypeScript
+module.exports.Hook = Hook;
+module.exports.Singular = Hook.Singular;
+module.exports.Collection = Hook.Collection;
+
+
+/***/ }),
+
+/***/ 5549:
+/***/ ((module) => {
+
+module.exports = addHook;
+
+function addHook(state, kind, name, hook) {
+  var orig = hook;
+  if (!state.registry[name]) {
+    state.registry[name] = [];
+  }
+
+  if (kind === "before") {
+    hook = function (method, options) {
+      return Promise.resolve()
+        .then(orig.bind(null, options))
+        .then(method.bind(null, options));
+    };
+  }
+
+  if (kind === "after") {
+    hook = function (method, options) {
+      var result;
+      return Promise.resolve()
+        .then(method.bind(null, options))
+        .then(function (result_) {
+          result = result_;
+          return orig(result, options);
+        })
+        .then(function () {
+          return result;
+        });
+    };
+  }
+
+  if (kind === "error") {
+    hook = function (method, options) {
+      return Promise.resolve()
+        .then(method.bind(null, options))
+        .catch(function (error) {
+          return orig(error, options);
+        });
+    };
+  }
+
+  state.registry[name].push({
+    hook: hook,
+    orig: orig,
+  });
+}
+
+
+/***/ }),
+
+/***/ 4670:
+/***/ ((module) => {
+
+module.exports = register;
+
+function register(state, name, method, options) {
+  if (typeof method !== "function") {
+    throw new Error("method for before hook must be a function");
+  }
+
+  if (!options) {
+    options = {};
+  }
+
+  if (Array.isArray(name)) {
+    return name.reverse().reduce(function (callback, name) {
+      return register.bind(null, state, name, callback, options);
+    }, method)();
+  }
+
+  return Promise.resolve().then(function () {
+    if (!state.registry[name]) {
+      return method(options);
+    }
+
+    return state.registry[name].reduce(function (method, registered) {
+      return registered.hook.bind(null, method, options);
+    }, method)();
+  });
+}
+
+
+/***/ }),
+
+/***/ 6819:
+/***/ ((module) => {
+
+module.exports = removeHook;
+
+function removeHook(state, name, method) {
+  if (!state.registry[name]) {
+    return;
+  }
+
+  var index = state.registry[name]
+    .map(function (registered) {
+      return registered.orig;
+    })
+    .indexOf(method);
+
+  if (index === -1) {
+    return;
+  }
+
+  state.registry[name].splice(index, 1);
+}
+
+
+/***/ }),
+
+/***/ 1174:
+/***/ (function(module) {
+
+/**
+  * This file contains the Bottleneck library (MIT), compiled to ES2017, and without Clustering support.
+  * https://github.com/SGrondin/bottleneck
+  */
+(function (global, factory) {
+	 true ? module.exports = factory() :
+	0;
+}(this, (function () { 'use strict';
+
+	var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
+
+	function getCjsExportFromNamespace (n) {
+		return n && n['default'] || n;
+	}
+
+	var load = function(received, defaults, onto = {}) {
+	  var k, ref, v;
+	  for (k in defaults) {
+	    v = defaults[k];
+	    onto[k] = (ref = received[k]) != null ? ref : v;
+	  }
+	  return onto;
+	};
+
+	var overwrite = function(received, defaults, onto = {}) {
+	  var k, v;
+	  for (k in received) {
+	    v = received[k];
+	    if (defaults[k] !== void 0) {
+	      onto[k] = v;
+	    }
+	  }
+	  return onto;
+	};
+
+	var parser = {
+		load: load,
+		overwrite: overwrite
+	};
+
+	var DLList;
+
+	DLList = class DLList {
+	  constructor(incr, decr) {
+	    this.incr = incr;
+	    this.decr = decr;
+	    this._first = null;
+	    this._last = null;
+	    this.length = 0;
+	  }
+
+	  push(value) {
+	    var node;
+	    this.length++;
+	    if (typeof this.incr === "function") {
+	      this.incr();
+	    }
+	    node = {
+	      value,
+	      prev: this._last,
+	      next: null
+	    };
+	    if (this._last != null) {
+	      this._last.next = node;
+	      this._last = node;
+	    } else {
+	      this._first = this._last = node;
+	    }
+	    return void 0;
+	  }
+
+	  shift() {
+	    var value;
+	    if (this._first == null) {
+	      return;
+	    } else {
+	      this.length--;
+	      if (typeof this.decr === "function") {
+	        this.decr();
+	      }
+	    }
+	    value = this._first.value;
+	    if ((this._first = this._first.next) != null) {
+	      this._first.prev = null;
+	    } else {
+	      this._last = null;
+	    }
+	    return value;
+	  }
+
+	  first() {
+	    if (this._first != null) {
+	      return this._first.value;
+	    }
+	  }
+
+	  getArray() {
+	    var node, ref, results;
+	    node = this._first;
+	    results = [];
+	    while (node != null) {
+	      results.push((ref = node, node = node.next, ref.value));
+	    }
+	    return results;
+	  }
+
+	  forEachShift(cb) {
+	    var node;
+	    node = this.shift();
+	    while (node != null) {
+	      (cb(node), node = this.shift());
+	    }
+	    return void 0;
+	  }
+
+	  debug() {
+	    var node, ref, ref1, ref2, results;
+	    node = this._first;
+	    results = [];
+	    while (node != null) {
+	      results.push((ref = node, node = node.next, {
+	        value: ref.value,
+	        prev: (ref1 = ref.prev) != null ? ref1.value : void 0,
+	        next: (ref2 = ref.next) != null ? ref2.value : void 0
+	      }));
+	    }
+	    return results;
+	  }
+
+	};
+
+	var DLList_1 = DLList;
+
+	var Events;
+
+	Events = class Events {
+	  constructor(instance) {
+	    this.instance = instance;
+	    this._events = {};
+	    if ((this.instance.on != null) || (this.instance.once != null) || (this.instance.removeAllListeners != null)) {
+	      throw new Error("An Emitter already exists for this object");
+	    }
+	    this.instance.on = (name, cb) => {
+	      return this._addListener(name, "many", cb);
+	    };
+	    this.instance.once = (name, cb) => {
+	      return this._addListener(name, "once", cb);
+	    };
+	    this.instance.removeAllListeners = (name = null) => {
+	      if (name != null) {
+	        return delete this._events[name];
+	      } else {
+	        return this._events = {};
+	      }
+	    };
+	  }
+
+	  _addListener(name, status, cb) {
+	    var base;
+	    if ((base = this._events)[name] == null) {
+	      base[name] = [];
+	    }
+	    this._events[name].push({cb, status});
+	    return this.instance;
+	  }
+
+	  listenerCount(name) {
+	    if (this._events[name] != null) {
+	      return this._events[name].length;
+	    } else {
+	      return 0;
+	    }
+	  }
+
+	  async trigger(name, ...args) {
+	    var e, promises;
+	    try {
+	      if (name !== "debug") {
+	        this.trigger("debug", `Event triggered: ${name}`, args);
+	      }
+	      if (this._events[name] == null) {
+	        return;
+	      }
+	      this._events[name] = this._events[name].filter(function(listener) {
+	        return listener.status !== "none";
+	      });
+	      promises = this._events[name].map(async(listener) => {
+	        var e, returned;
+	        if (listener.status === "none") {
+	          return;
+	        }
+	        if (listener.status === "once") {
+	          listener.status = "none";
+	        }
+	        try {
+	          returned = typeof listener.cb === "function" ? listener.cb(...args) : void 0;
+	          if (typeof (returned != null ? returned.then : void 0) === "function") {
+	            return (await returned);
+	          } else {
+	            return returned;
+	          }
+	        } catch (error) {
+	          e = error;
+	          {
+	            this.trigger("error", e);
+	          }
+	          return null;
+	        }
+	      });
+	      return ((await Promise.all(promises))).find(function(x) {
+	        return x != null;
+	      });
+	    } catch (error) {
+	      e = error;
+	      {
+	        this.trigger("error", e);
+	      }
+	      return null;
+	    }
+	  }
+
+	};
+
+	var Events_1 = Events;
+
+	var DLList$1, Events$1, Queues;
+
+	DLList$1 = DLList_1;
+
+	Events$1 = Events_1;
+
+	Queues = class Queues {
+	  constructor(num_priorities) {
+	    var i;
+	    this.Events = new Events$1(this);
+	    this._length = 0;
+	    this._lists = (function() {
+	      var j, ref, results;
+	      results = [];
+	      for (i = j = 1, ref = num_priorities; (1 <= ref ? j <= ref : j >= ref); i = 1 <= ref ? ++j : --j) {
+	        results.push(new DLList$1((() => {
+	          return this.incr();
+	        }), (() => {
+	          return this.decr();
+	        })));
+	      }
+	      return results;
+	    }).call(this);
+	  }
+
+	  incr() {
+	    if (this._length++ === 0) {
+	      return this.Events.trigger("leftzero");
+	    }
+	  }
+
+	  decr() {
+	    if (--this._length === 0) {
+	      return this.Events.trigger("zero");
+	    }
+	  }
+
+	  push(job) {
+	    return this._lists[job.options.priority].push(job);
+	  }
+
+	  queued(priority) {
+	    if (priority != null) {
+	      return this._lists[priority].length;
+	    } else {
+	      return this._length;
+	    }
+	  }
+
+	  shiftAll(fn) {
+	    return this._lists.forEach(function(list) {
+	      return list.forEachShift(fn);
+	    });
+	  }
+
+	  getFirst(arr = this._lists) {
+	    var j, len, list;
+	    for (j = 0, len = arr.length; j < len; j++) {
+	      list = arr[j];
+	      if (list.length > 0) {
+	        return list;
+	      }
+	    }
+	    return [];
+	  }
+
+	  shiftLastFrom(priority) {
+	    return this.getFirst(this._lists.slice(priority).reverse()).shift();
+	  }
+
+	};
+
+	var Queues_1 = Queues;
+
+	var BottleneckError;
+
+	BottleneckError = class BottleneckError extends Error {};
+
+	var BottleneckError_1 = BottleneckError;
+
+	var BottleneckError$1, DEFAULT_PRIORITY, Job, NUM_PRIORITIES, parser$1;
+
+	NUM_PRIORITIES = 10;
+
+	DEFAULT_PRIORITY = 5;
+
+	parser$1 = parser;
+
+	BottleneckError$1 = BottleneckError_1;
+
+	Job = class Job {
+	  constructor(task, args, options, jobDefaults, rejectOnDrop, Events, _states, Promise) {
+	    this.task = task;
+	    this.args = args;
+	    this.rejectOnDrop = rejectOnDrop;
+	    this.Events = Events;
+	    this._states = _states;
+	    this.Promise = Promise;
+	    this.options = parser$1.load(options, jobDefaults);
+	    this.options.priority = this._sanitizePriority(this.options.priority);
+	    if (this.options.id === jobDefaults.id) {
+	      this.options.id = `${this.options.id}-${this._randomIndex()}`;
+	    }
+	    this.promise = new this.Promise((_resolve, _reject) => {
+	      this._resolve = _resolve;
+	      this._reject = _reject;
+	    });
+	    this.retryCount = 0;
+	  }
+
+	  _sanitizePriority(priority) {
+	    var sProperty;
+	    sProperty = ~~priority !== priority ? DEFAULT_PRIORITY : priority;
+	    if (sProperty < 0) {
+	      return 0;
+	    } else if (sProperty > NUM_PRIORITIES - 1) {
+	      return NUM_PRIORITIES - 1;
+	    } else {
+	      return sProperty;
+	    }
+	  }
+
+	  _randomIndex() {
+	    return Math.random().toString(36).slice(2);
+	  }
+
+	  doDrop({error, message = "This job has been dropped by Bottleneck"} = {}) {
+	    if (this._states.remove(this.options.id)) {
+	      if (this.rejectOnDrop) {
+	        this._reject(error != null ? error : new BottleneckError$1(message));
+	      }
+	      this.Events.trigger("dropped", {args: this.args, options: this.options, task: this.task, promise: this.promise});
+	      return true;
+	    } else {
+	      return false;
+	    }
+	  }
+
+	  _assertStatus(expected) {
+	    var status;
+	    status = this._states.jobStatus(this.options.id);
+	    if (!(status === expected || (expected === "DONE" && status === null))) {
+	      throw new BottleneckError$1(`Invalid job status ${status}, expected ${expected}. Please open an issue at https://github.com/SGrondin/bottleneck/issues`);
+	    }
+	  }
+
+	  doReceive() {
+	    this._states.start(this.options.id);
+	    return this.Events.trigger("received", {args: this.args, options: this.options});
+	  }
+
+	  doQueue(reachedHWM, blocked) {
+	    this._assertStatus("RECEIVED");
+	    this._states.next(this.options.id);
+	    return this.Events.trigger("queued", {args: this.args, options: this.options, reachedHWM, blocked});
+	  }
+
+	  doRun() {
+	    if (this.retryCount === 0) {
+	      this._assertStatus("QUEUED");
+	      this._states.next(this.options.id);
+	    } else {
+	      this._assertStatus("EXECUTING");
+	    }
+	    return this.Events.trigger("scheduled", {args: this.args, options: this.options});
+	  }
+
+	  async doExecute(chained, clearGlobalState, run, free) {
+	    var error, eventInfo, passed;
+	    if (this.retryCount === 0) {
+	      this._assertStatus("RUNNING");
+	      this._states.next(this.options.id);
+	    } else {
+	      this._assertStatus("EXECUTING");
+	    }
+	    eventInfo = {args: this.args, options: this.options, retryCount: this.retryCount};
+	    this.Events.trigger("executing", eventInfo);
+	    try {
+	      passed = (await (chained != null ? chained.schedule(this.options, this.task, ...this.args) : this.task(...this.args)));
+	      if (clearGlobalState()) {
+	        this.doDone(eventInfo);
+	        await free(this.options, eventInfo);
+	        this._assertStatus("DONE");
+	        return this._resolve(passed);
+	      }
+	    } catch (error1) {
+	      error = error1;
+	      return this._onFailure(error, eventInfo, clearGlobalState, run, free);
+	    }
+	  }
+
+	  doExpire(clearGlobalState, run, free) {
+	    var error, eventInfo;
+	    if (this._states.jobStatus(this.options.id === "RUNNING")) {
+	      this._states.next(this.options.id);
+	    }
+	    this._assertStatus("EXECUTING");
+	    eventInfo = {args: this.args, options: this.options, retryCount: this.retryCount};
+	    error = new BottleneckError$1(`This job timed out after ${this.options.expiration} ms.`);
+	    return this._onFailure(error, eventInfo, clearGlobalState, run, free);
+	  }
+
+	  async _onFailure(error, eventInfo, clearGlobalState, run, free) {
+	    var retry, retryAfter;
+	    if (clearGlobalState()) {
+	      retry = (await this.Events.trigger("failed", error, eventInfo));
+	      if (retry != null) {
+	        retryAfter = ~~retry;
+	        this.Events.trigger("retry", `Retrying ${this.options.id} after ${retryAfter} ms`, eventInfo);
+	        this.retryCount++;
+	        return run(retryAfter);
+	      } else {
+	        this.doDone(eventInfo);
+	        await free(this.options, eventInfo);
+	        this._assertStatus("DONE");
+	        return this._reject(error);
+	      }
+	    }
+	  }
+
+	  doDone(eventInfo) {
+	    this._assertStatus("EXECUTING");
+	    this._states.next(this.options.id);
+	    return this.Events.trigger("done", eventInfo);
+	  }
+
+	};
+
+	var Job_1 = Job;
+
+	var BottleneckError$2, LocalDatastore, parser$2;
+
+	parser$2 = parser;
+
+	BottleneckError$2 = BottleneckError_1;
+
+	LocalDatastore = class LocalDatastore {
+	  constructor(instance, storeOptions, storeInstanceOptions) {
+	    this.instance = instance;
+	    this.storeOptions = storeOptions;
+	    this.clientId = this.instance._randomIndex();
+	    parser$2.load(storeInstanceOptions, storeInstanceOptions, this);
+	    this._nextRequest = this._lastReservoirRefresh = this._lastReservoirIncrease = Date.now();
+	    this._running = 0;
+	    this._done = 0;
+	    this._unblockTime = 0;
+	    this.ready = this.Promise.resolve();
+	    this.clients = {};
+	    this._startHeartbeat();
+	  }
+
+	  _startHeartbeat() {
+	    var base;
+	    if ((this.heartbeat == null) && (((this.storeOptions.reservoirRefreshInterval != null) && (this.storeOptions.reservoirRefreshAmount != null)) || ((this.storeOptions.reservoirIncreaseInterval != null) && (this.storeOptions.reservoirIncreaseAmount != null)))) {
+	      return typeof (base = (this.heartbeat = setInterval(() => {
+	        var amount, incr, maximum, now, reservoir;
+	        now = Date.now();
+	        if ((this.storeOptions.reservoirRefreshInterval != null) && now >= this._lastReservoirRefresh + this.storeOptions.reservoirRefreshInterval) {
+	          this._lastReservoirRefresh = now;
+	          this.storeOptions.reservoir = this.storeOptions.reservoirRefreshAmount;
+	          this.instance._drainAll(this.computeCapacity());
+	        }
+	        if ((this.storeOptions.reservoirIncreaseInterval != null) && now >= this._lastReservoirIncrease + this.storeOptions.reservoirIncreaseInterval) {
+	          ({
+	            reservoirIncreaseAmount: amount,
+	            reservoirIncreaseMaximum: maximum,
+	            reservoir
+	          } = this.storeOptions);
+	          this._lastReservoirIncrease = now;
+	          incr = maximum != null ? Math.min(amount, maximum - reservoir) : amount;
+	          if (incr > 0) {
+	            this.storeOptions.reservoir += incr;
+	            return this.instance._drainAll(this.computeCapacity());
+	          }
+	        }
+	      }, this.heartbeatInterval))).unref === "function" ? base.unref() : void 0;
+	    } else {
+	      return clearInterval(this.heartbeat);
+	    }
+	  }
+
+	  async __publish__(message) {
+	    await this.yieldLoop();
+	    return this.instance.Events.trigger("message", message.toString());
+	  }
+
+	  async __disconnect__(flush) {
+	    await this.yieldLoop();
+	    clearInterval(this.heartbeat);
+	    return this.Promise.resolve();
+	  }
+
+	  yieldLoop(t = 0) {
+	    return new this.Promise(function(resolve, reject) {
+	      return setTimeout(resolve, t);
+	    });
+	  }
+
+	  computePenalty() {
+	    var ref;
+	    return (ref = this.storeOptions.penalty) != null ? ref : (15 * this.storeOptions.minTime) || 5000;
+	  }
+
+	  async __updateSettings__(options) {
+	    await this.yieldLoop();
+	    parser$2.overwrite(options, options, this.storeOptions);
+	    this._startHeartbeat();
+	    this.instance._drainAll(this.computeCapacity());
+	    return true;
+	  }
+
+	  async __running__() {
+	    await this.yieldLoop();
+	    return this._running;
+	  }
+
+	  async __queued__() {
+	    await this.yieldLoop();
+	    return this.instance.queued();
+	  }
+
+	  async __done__() {
+	    await this.yieldLoop();
+	    return this._done;
+	  }
+
+	  async __groupCheck__(time) {
+	    await this.yieldLoop();
+	    return (this._nextRequest + this.timeout) < time;
+	  }
+
+	  computeCapacity() {
+	    var maxConcurrent, reservoir;
+	    ({maxConcurrent, reservoir} = this.storeOptions);
+	    if ((maxConcurrent != null) && (reservoir != null)) {
+	      return Math.min(maxConcurrent - this._running, reservoir);
+	    } else if (maxConcurrent != null) {
+	      return maxConcurrent - this._running;
+	    } else if (reservoir != null) {
+	      return reservoir;
+	    } else {
+	      return null;
+	    }
+	  }
+
+	  conditionsCheck(weight) {
+	    var capacity;
+	    capacity = this.computeCapacity();
+	    return (capacity == null) || weight <= capacity;
+	  }
+
+	  async __incrementReservoir__(incr) {
+	    var reservoir;
+	    await this.yieldLoop();
+	    reservoir = this.storeOptions.reservoir += incr;
+	    this.instance._drainAll(this.computeCapacity());
+	    return reservoir;
+	  }
+
+	  async __currentReservoir__() {
+	    await this.yieldLoop();
+	    return this.storeOptions.reservoir;
+	  }
+
+	  isBlocked(now) {
+	    return this._unblockTime >= now;
+	  }
+
+	  check(weight, now) {
+	    return this.conditionsCheck(weight) && (this._nextRequest - now) <= 0;
+	  }
+
+	  async __check__(weight) {
+	    var now;
+	    await this.yieldLoop();
+	    now = Date.now();
+	    return this.check(weight, now);
+	  }
+
+	  async __register__(index, weight, expiration) {
+	    var now, wait;
+	    await this.yieldLoop();
+	    now = Date.now();
+	    if (this.conditionsCheck(weight)) {
+	      this._running += weight;
+	      if (this.storeOptions.reservoir != null) {
+	        this.storeOptions.reservoir -= weight;
+	      }
+	      wait = Math.max(this._nextRequest - now, 0);
+	      this._nextRequest = now + wait + this.storeOptions.minTime;
+	      return {
+	        success: true,
+	        wait,
+	        reservoir: this.storeOptions.reservoir
+	      };
+	    } else {
+	      return {
+	        success: false
+	      };
+	    }
+	  }
+
+	  strategyIsBlock() {
+	    return this.storeOptions.strategy === 3;
+	  }
+
+	  async __submit__(queueLength, weight) {
+	    var blocked, now, reachedHWM;
+	    await this.yieldLoop();
+	    if ((this.storeOptions.maxConcurrent != null) && weight > this.storeOptions.maxConcurrent) {
+	      throw new BottleneckError$2(`Impossible to add a job having a weight of ${weight} to a limiter having a maxConcurrent setting of ${this.storeOptions.maxConcurrent}`);
+	    }
+	    now = Date.now();
+	    reachedHWM = (this.storeOptions.highWater != null) && queueLength === this.storeOptions.highWater && !this.check(weight, now);
+	    blocked = this.strategyIsBlock() && (reachedHWM || this.isBlocked(now));
+	    if (blocked) {
+	      this._unblockTime = now + this.computePenalty();
+	      this._nextRequest = this._unblockTime + this.storeOptions.minTime;
+	      this.instance._dropAllQueued();
+	    }
+	    return {
+	      reachedHWM,
+	      blocked,
+	      strategy: this.storeOptions.strategy
+	    };
+	  }
+
+	  async __free__(index, weight) {
+	    await this.yieldLoop();
+	    this._running -= weight;
+	    this._done += weight;
+	    this.instance._drainAll(this.computeCapacity());
+	    return {
+	      running: this._running
+	    };
+	  }
+
+	};
+
+	var LocalDatastore_1 = LocalDatastore;
+
+	var BottleneckError$3, States;
+
+	BottleneckError$3 = BottleneckError_1;
+
+	States = class States {
+	  constructor(status1) {
+	    this.status = status1;
+	    this._jobs = {};
+	    this.counts = this.status.map(function() {
+	      return 0;
+	    });
+	  }
+
+	  next(id) {
+	    var current, next;
+	    current = this._jobs[id];
+	    next = current + 1;
+	    if ((current != null) && next < this.status.length) {
+	      this.counts[current]--;
+	      this.counts[next]++;
+	      return this._jobs[id]++;
+	    } else if (current != null) {
+	      this.counts[current]--;
+	      return delete this._jobs[id];
+	    }
+	  }
+
+	  start(id) {
+	    var initial;
+	    initial = 0;
+	    this._jobs[id] = initial;
+	    return this.counts[initial]++;
+	  }
+
+	  remove(id) {
+	    var current;
+	    current = this._jobs[id];
+	    if (current != null) {
+	      this.counts[current]--;
+	      delete this._jobs[id];
+	    }
+	    return current != null;
+	  }
+
+	  jobStatus(id) {
+	    var ref;
+	    return (ref = this.status[this._jobs[id]]) != null ? ref : null;
+	  }
+
+	  statusJobs(status) {
+	    var k, pos, ref, results, v;
+	    if (status != null) {
+	      pos = this.status.indexOf(status);
+	      if (pos < 0) {
+	        throw new BottleneckError$3(`status must be one of ${this.status.join(', ')}`);
+	      }
+	      ref = this._jobs;
+	      results = [];
+	      for (k in ref) {
+	        v = ref[k];
+	        if (v === pos) {
+	          results.push(k);
+	        }
+	      }
+	      return results;
+	    } else {
+	      return Object.keys(this._jobs);
+	    }
+	  }
+
+	  statusCounts() {
+	    return this.counts.reduce(((acc, v, i) => {
+	      acc[this.status[i]] = v;
+	      return acc;
+	    }), {});
+	  }
+
+	};
+
+	var States_1 = States;
+
+	var DLList$2, Sync;
+
+	DLList$2 = DLList_1;
+
+	Sync = class Sync {
+	  constructor(name, Promise) {
+	    this.schedule = this.schedule.bind(this);
+	    this.name = name;
+	    this.Promise = Promise;
+	    this._running = 0;
+	    this._queue = new DLList$2();
+	  }
+
+	  isEmpty() {
+	    return this._queue.length === 0;
+	  }
+
+	  async _tryToRun() {
+	    var args, cb, error, reject, resolve, returned, task;
+	    if ((this._running < 1) && this._queue.length > 0) {
+	      this._running++;
+	      ({task, args, resolve, reject} = this._queue.shift());
+	      cb = (await (async function() {
+	        try {
+	          returned = (await task(...args));
+	          return function() {
+	            return resolve(returned);
+	          };
+	        } catch (error1) {
+	          error = error1;
+	          return function() {
+	            return reject(error);
+	          };
+	        }
+	      })());
+	      this._running--;
+	      this._tryToRun();
+	      return cb();
+	    }
+	  }
+
+	  schedule(task, ...args) {
+	    var promise, reject, resolve;
+	    resolve = reject = null;
+	    promise = new this.Promise(function(_resolve, _reject) {
+	      resolve = _resolve;
+	      return reject = _reject;
+	    });
+	    this._queue.push({task, args, resolve, reject});
+	    this._tryToRun();
+	    return promise;
+	  }
+
+	};
+
+	var Sync_1 = Sync;
+
+	var version = "2.19.5";
+	var version$1 = {
+		version: version
+	};
+
+	var version$2 = /*#__PURE__*/Object.freeze({
+		version: version,
+		default: version$1
+	});
+
+	var require$$2 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+	var require$$3 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+	var require$$4 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+	var Events$2, Group, IORedisConnection$1, RedisConnection$1, Scripts$1, parser$3;
+
+	parser$3 = parser;
+
+	Events$2 = Events_1;
+
+	RedisConnection$1 = require$$2;
+
+	IORedisConnection$1 = require$$3;
+
+	Scripts$1 = require$$4;
+
+	Group = (function() {
+	  class Group {
+	    constructor(limiterOptions = {}) {
+	      this.deleteKey = this.deleteKey.bind(this);
+	      this.limiterOptions = limiterOptions;
+	      parser$3.load(this.limiterOptions, this.defaults, this);
+	      this.Events = new Events$2(this);
+	      this.instances = {};
+	      this.Bottleneck = Bottleneck_1;
+	      this._startAutoCleanup();
+	      this.sharedConnection = this.connection != null;
+	      if (this.connection == null) {
+	        if (this.limiterOptions.datastore === "redis") {
+	          this.connection = new RedisConnection$1(Object.assign({}, this.limiterOptions, {Events: this.Events}));
+	        } else if (this.limiterOptions.datastore === "ioredis") {
+	          this.connection = new IORedisConnection$1(Object.assign({}, this.limiterOptions, {Events: this.Events}));
+	        }
+	      }
+	    }
+
+	    key(key = "") {
+	      var ref;
+	      return (ref = this.instances[key]) != null ? ref : (() => {
+	        var limiter;
+	        limiter = this.instances[key] = new this.Bottleneck(Object.assign(this.limiterOptions, {
+	          id: `${this.id}-${key}`,
+	          timeout: this.timeout,
+	          connection: this.connection
+	        }));
+	        this.Events.trigger("created", limiter, key);
+	        return limiter;
+	      })();
+	    }
+
+	    async deleteKey(key = "") {
+	      var deleted, instance;
+	      instance = this.instances[key];
+	      if (this.connection) {
+	        deleted = (await this.connection.__runCommand__(['del', ...Scripts$1.allKeys(`${this.id}-${key}`)]));
+	      }
+	      if (instance != null) {
+	        delete this.instances[key];
+	        await instance.disconnect();
+	      }
+	      return (instance != null) || deleted > 0;
+	    }
+
+	    limiters() {
+	      var k, ref, results, v;
+	      ref = this.instances;
+	      results = [];
+	      for (k in ref) {
+	        v = ref[k];
+	        results.push({
+	          key: k,
+	          limiter: v
+	        });
+	      }
+	      return results;
+	    }
+
+	    keys() {
+	      return Object.keys(this.instances);
+	    }
+
+	    async clusterKeys() {
+	      var cursor, end, found, i, k, keys, len, next, start;
+	      if (this.connection == null) {
+	        return this.Promise.resolve(this.keys());
+	      }
+	      keys = [];
+	      cursor = null;
+	      start = `b_${this.id}-`.length;
+	      end = "_settings".length;
+	      while (cursor !== 0) {
+	        [next, found] = (await this.connection.__runCommand__(["scan", cursor != null ? cursor : 0, "match", `b_${this.id}-*_settings`, "count", 10000]));
+	        cursor = ~~next;
+	        for (i = 0, len = found.length; i < len; i++) {
+	          k = found[i];
+	          keys.push(k.slice(start, -end));
+	        }
+	      }
+	      return keys;
+	    }
+
+	    _startAutoCleanup() {
+	      var base;
+	      clearInterval(this.interval);
+	      return typeof (base = (this.interval = setInterval(async() => {
+	        var e, k, ref, results, time, v;
+	        time = Date.now();
+	        ref = this.instances;
+	        results = [];
+	        for (k in ref) {
+	          v = ref[k];
+	          try {
+	            if ((await v._store.__groupCheck__(time))) {
+	              results.push(this.deleteKey(k));
+	            } else {
+	              results.push(void 0);
+	            }
+	          } catch (error) {
+	            e = error;
+	            results.push(v.Events.trigger("error", e));
+	          }
+	        }
+	        return results;
+	      }, this.timeout / 2))).unref === "function" ? base.unref() : void 0;
+	    }
+
+	    updateSettings(options = {}) {
+	      parser$3.overwrite(options, this.defaults, this);
+	      parser$3.overwrite(options, options, this.limiterOptions);
+	      if (options.timeout != null) {
+	        return this._startAutoCleanup();
+	      }
+	    }
+
+	    disconnect(flush = true) {
+	      var ref;
+	      if (!this.sharedConnection) {
+	        return (ref = this.connection) != null ? ref.disconnect(flush) : void 0;
+	      }
+	    }
+
+	  }
+	  Group.prototype.defaults = {
+	    timeout: 1000 * 60 * 5,
+	    connection: null,
+	    Promise: Promise,
+	    id: "group-key"
+	  };
+
+	  return Group;
+
+	}).call(commonjsGlobal);
+
+	var Group_1 = Group;
+
+	var Batcher, Events$3, parser$4;
+
+	parser$4 = parser;
+
+	Events$3 = Events_1;
+
+	Batcher = (function() {
+	  class Batcher {
+	    constructor(options = {}) {
+	      this.options = options;
+	      parser$4.load(this.options, this.defaults, this);
+	      this.Events = new Events$3(this);
+	      this._arr = [];
+	      this._resetPromise();
+	      this._lastFlush = Date.now();
+	    }
+
+	    _resetPromise() {
+	      return this._promise = new this.Promise((res, rej) => {
+	        return this._resolve = res;
+	      });
+	    }
+
+	    _flush() {
+	      clearTimeout(this._timeout);
+	      this._lastFlush = Date.now();
+	      this._resolve();
+	      this.Events.trigger("batch", this._arr);
+	      this._arr = [];
+	      return this._resetPromise();
+	    }
+
+	    add(data) {
+	      var ret;
+	      this._arr.push(data);
+	      ret = this._promise;
+	      if (this._arr.length === this.maxSize) {
+	        this._flush();
+	      } else if ((this.maxTime != null) && this._arr.length === 1) {
+	        this._timeout = setTimeout(() => {
+	          return this._flush();
+	        }, this.maxTime);
+	      }
+	      return ret;
+	    }
+
+	  }
+	  Batcher.prototype.defaults = {
+	    maxTime: null,
+	    maxSize: null,
+	    Promise: Promise
+	  };
+
+	  return Batcher;
+
+	}).call(commonjsGlobal);
+
+	var Batcher_1 = Batcher;
+
+	var require$$4$1 = () => console.log('You must import the full version of Bottleneck in order to use this feature.');
+
+	var require$$8 = getCjsExportFromNamespace(version$2);
+
+	var Bottleneck, DEFAULT_PRIORITY$1, Events$4, Job$1, LocalDatastore$1, NUM_PRIORITIES$1, Queues$1, RedisDatastore$1, States$1, Sync$1, parser$5,
+	  splice = [].splice;
+
+	NUM_PRIORITIES$1 = 10;
+
+	DEFAULT_PRIORITY$1 = 5;
+
+	parser$5 = parser;
+
+	Queues$1 = Queues_1;
+
+	Job$1 = Job_1;
+
+	LocalDatastore$1 = LocalDatastore_1;
+
+	RedisDatastore$1 = require$$4$1;
+
+	Events$4 = Events_1;
+
+	States$1 = States_1;
+
+	Sync$1 = Sync_1;
+
+	Bottleneck = (function() {
+	  class Bottleneck {
+	    constructor(options = {}, ...invalid) {
+	      var storeInstanceOptions, storeOptions;
+	      this._addToQueue = this._addToQueue.bind(this);
+	      this._validateOptions(options, invalid);
+	      parser$5.load(options, this.instanceDefaults, this);
+	      this._queues = new Queues$1(NUM_PRIORITIES$1);
+	      this._scheduled = {};
+	      this._states = new States$1(["RECEIVED", "QUEUED", "RUNNING", "EXECUTING"].concat(this.trackDoneStatus ? ["DONE"] : []));
+	      this._limiter = null;
+	      this.Events = new Events$4(this);
+	      this._submitLock = new Sync$1("submit", this.Promise);
+	      this._registerLock = new Sync$1("register", this.Promise);
+	      storeOptions = parser$5.load(options, this.storeDefaults, {});
+	      this._store = (function() {
+	        if (this.datastore === "redis" || this.datastore === "ioredis" || (this.connection != null)) {
+	          storeInstanceOptions = parser$5.load(options, this.redisStoreDefaults, {});
+	          return new RedisDatastore$1(this, storeOptions, storeInstanceOptions);
+	        } else if (this.datastore === "local") {
+	          storeInstanceOptions = parser$5.load(options, this.localStoreDefaults, {});
+	          return new LocalDatastore$1(this, storeOptions, storeInstanceOptions);
+	        } else {
+	          throw new Bottleneck.prototype.BottleneckError(`Invalid datastore type: ${this.datastore}`);
+	        }
+	      }).call(this);
+	      this._queues.on("leftzero", () => {
+	        var ref;
+	        return (ref = this._store.heartbeat) != null ? typeof ref.ref === "function" ? ref.ref() : void 0 : void 0;
+	      });
+	      this._queues.on("zero", () => {
+	        var ref;
+	        return (ref = this._store.heartbeat) != null ? typeof ref.unref === "function" ? ref.unref() : void 0 : void 0;
+	      });
+	    }
+
+	    _validateOptions(options, invalid) {
+	      if (!((options != null) && typeof options === "object" && invalid.length === 0)) {
+	        throw new Bottleneck.prototype.BottleneckError("Bottleneck v2 takes a single object argument. Refer to https://github.com/SGrondin/bottleneck#upgrading-to-v2 if you're upgrading from Bottleneck v1.");
+	      }
+	    }
+
+	    ready() {
+	      return this._store.ready;
+	    }
+
+	    clients() {
+	      return this._store.clients;
+	    }
+
+	    channel() {
+	      return `b_${this.id}`;
+	    }
+
+	    channel_client() {
+	      return `b_${this.id}_${this._store.clientId}`;
+	    }
+
+	    publish(message) {
+	      return this._store.__publish__(message);
+	    }
+
+	    disconnect(flush = true) {
+	      return this._store.__disconnect__(flush);
+	    }
+
+	    chain(_limiter) {
+	      this._limiter = _limiter;
+	      return this;
+	    }
+
+	    queued(priority) {
+	      return this._queues.queued(priority);
+	    }
+
+	    clusterQueued() {
+	      return this._store.__queued__();
+	    }
+
+	    empty() {
+	      return this.queued() === 0 && this._submitLock.isEmpty();
+	    }
+
+	    running() {
+	      return this._store.__running__();
+	    }
+
+	    done() {
+	      return this._store.__done__();
+	    }
+
+	    jobStatus(id) {
+	      return this._states.jobStatus(id);
+	    }
+
+	    jobs(status) {
+	      return this._states.statusJobs(status);
+	    }
+
+	    counts() {
+	      return this._states.statusCounts();
+	    }
+
+	    _randomIndex() {
+	      return Math.random().toString(36).slice(2);
+	    }
+
+	    check(weight = 1) {
+	      return this._store.__check__(weight);
+	    }
+
+	    _clearGlobalState(index) {
+	      if (this._scheduled[index] != null) {
+	        clearTimeout(this._scheduled[index].expiration);
+	        delete this._scheduled[index];
+	        return true;
+	      } else {
+	        return false;
+	      }
+	    }
+
+	    async _free(index, job, options, eventInfo) {
+	      var e, running;
+	      try {
+	        ({running} = (await this._store.__free__(index, options.weight)));
+	        this.Events.trigger("debug", `Freed ${options.id}`, eventInfo);
+	        if (running === 0 && this.empty()) {
+	          return this.Events.trigger("idle");
+	        }
+	      } catch (error1) {
+	        e = error1;
+	        return this.Events.trigger("error", e);
+	      }
+	    }
+
+	    _run(index, job, wait) {
+	      var clearGlobalState, free, run;
+	      job.doRun();
+	      clearGlobalState = this._clearGlobalState.bind(this, index);
+	      run = this._run.bind(this, index, job);
+	      free = this._free.bind(this, index, job);
+	      return this._scheduled[index] = {
+	        timeout: setTimeout(() => {
+	          return job.doExecute(this._limiter, clearGlobalState, run, free);
+	        }, wait),
+	        expiration: job.options.expiration != null ? setTimeout(function() {
+	          return job.doExpire(clearGlobalState, run, free);
+	        }, wait + job.options.expiration) : void 0,
+	        job: job
+	      };
+	    }
+
+	    _drainOne(capacity) {
+	      return this._registerLock.schedule(() => {
+	        var args, index, next, options, queue;
+	        if (this.queued() === 0) {
+	          return this.Promise.resolve(null);
+	        }
+	        queue = this._queues.getFirst();
+	        ({options, args} = next = queue.first());
+	        if ((capacity != null) && options.weight > capacity) {
+	          return this.Promise.resolve(null);
+	        }
+	        this.Events.trigger("debug", `Draining ${options.id}`, {args, options});
+	        index = this._randomIndex();
+	        return this._store.__register__(index, options.weight, options.expiration).then(({success, wait, reservoir}) => {
+	          var empty;
+	          this.Events.trigger("debug", `Drained ${options.id}`, {success, args, options});
+	          if (success) {
+	            queue.shift();
+	            empty = this.empty();
+	            if (empty) {
+	              this.Events.trigger("empty");
+	            }
+	            if (reservoir === 0) {
+	              this.Events.trigger("depleted", empty);
+	            }
+	            this._run(index, next, wait);
+	            return this.Promise.resolve(options.weight);
+	          } else {
+	            return this.Promise.resolve(null);
+	          }
+	        });
+	      });
+	    }
+
+	    _drainAll(capacity, total = 0) {
+	      return this._drainOne(capacity).then((drained) => {
+	        var newCapacity;
+	        if (drained != null) {
+	          newCapacity = capacity != null ? capacity - drained : capacity;
+	          return this._drainAll(newCapacity, total + drained);
+	        } else {
+	          return this.Promise.resolve(total);
+	        }
+	      }).catch((e) => {
+	        return this.Events.trigger("error", e);
+	      });
+	    }
+
+	    _dropAllQueued(message) {
+	      return this._queues.shiftAll(function(job) {
+	        return job.doDrop({message});
+	      });
+	    }
+
+	    stop(options = {}) {
+	      var done, waitForExecuting;
+	      options = parser$5.load(options, this.stopDefaults);
+	      waitForExecuting = (at) => {
+	        var finished;
+	        finished = () => {
+	          var counts;
+	          counts = this._states.counts;
+	          return (counts[0] + counts[1] + counts[2] + counts[3]) === at;
+	        };
+	        return new this.Promise((resolve, reject) => {
+	          if (finished()) {
+	            return resolve();
+	          } else {
+	            return this.on("done", () => {
+	              if (finished()) {
+	                this.removeAllListeners("done");
+	                return resolve();
+	              }
+	            });
+	          }
+	        });
+	      };
+	      done = options.dropWaitingJobs ? (this._run = function(index, next) {
+	        return next.doDrop({
+	          message: options.dropErrorMessage
+	        });
+	      }, this._drainOne = () => {
+	        return this.Promise.resolve(null);
+	      }, this._registerLock.schedule(() => {
+	        return this._submitLock.schedule(() => {
+	          var k, ref, v;
+	          ref = this._scheduled;
+	          for (k in ref) {
+	            v = ref[k];
+	            if (this.jobStatus(v.job.options.id) === "RUNNING") {
+	              clearTimeout(v.timeout);
+	              clearTimeout(v.expiration);
+	              v.job.doDrop({
+	                message: options.dropErrorMessage
+	              });
+	            }
+	          }
+	          this._dropAllQueued(options.dropErrorMessage);
+	          return waitForExecuting(0);
+	        });
+	      })) : this.schedule({
+	        priority: NUM_PRIORITIES$1 - 1,
+	        weight: 0
+	      }, () => {
+	        return waitForExecuting(1);
+	      });
+	      this._receive = function(job) {
+	        return job._reject(new Bottleneck.prototype.BottleneckError(options.enqueueErrorMessage));
+	      };
+	      this.stop = () => {
+	        return this.Promise.reject(new Bottleneck.prototype.BottleneckError("stop() has already been called"));
+	      };
+	      return done;
+	    }
+
+	    async _addToQueue(job) {
+	      var args, blocked, error, options, reachedHWM, shifted, strategy;
+	      ({args, options} = job);
+	      try {
+	        ({reachedHWM, blocked, strategy} = (await this._store.__submit__(this.queued(), options.weight)));
+	      } catch (error1) {
+	        error = error1;
+	        this.Events.trigger("debug", `Could not queue ${options.id}`, {args, options, error});
+	        job.doDrop({error});
+	        return false;
+	      }
+	      if (blocked) {
+	        job.doDrop();
+	        return true;
+	      } else if (reachedHWM) {
+	        shifted = strategy === Bottleneck.prototype.strategy.LEAK ? this._queues.shiftLastFrom(options.priority) : strategy === Bottleneck.prototype.strategy.OVERFLOW_PRIORITY ? this._queues.shiftLastFrom(options.priority + 1) : strategy === Bottleneck.prototype.strategy.OVERFLOW ? job : void 0;
+	        if (shifted != null) {
+	          shifted.doDrop();
+	        }
+	        if ((shifted == null) || strategy === Bottleneck.prototype.strategy.OVERFLOW) {
+	          if (shifted == null) {
+	            job.doDrop();
+	          }
+	          return reachedHWM;
+	        }
+	      }
+	      job.doQueue(reachedHWM, blocked);
+	      this._queues.push(job);
+	      await this._drainAll();
+	      return reachedHWM;
+	    }
+
+	    _receive(job) {
+	      if (this._states.jobStatus(job.options.id) != null) {
+	        job._reject(new Bottleneck.prototype.BottleneckError(`A job with the same id already exists (id=${job.options.id})`));
+	        return false;
+	      } else {
+	        job.doReceive();
+	        return this._submitLock.schedule(this._addToQueue, job);
+	      }
+	    }
+
+	    submit(...args) {
+	      var cb, fn, job, options, ref, ref1, task;
+	      if (typeof args[0] === "function") {
+	        ref = args, [fn, ...args] = ref, [cb] = splice.call(args, -1);
+	        options = parser$5.load({}, this.jobDefaults);
+	      } else {
+	        ref1 = args, [options, fn, ...args] = ref1, [cb] = splice.call(args, -1);
+	        options = parser$5.load(options, this.jobDefaults);
+	      }
+	      task = (...args) => {
+	        return new this.Promise(function(resolve, reject) {
+	          return fn(...args, function(...args) {
+	            return (args[0] != null ? reject : resolve)(args);
+	          });
+	        });
+	      };
+	      job = new Job$1(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+	      job.promise.then(function(args) {
+	        return typeof cb === "function" ? cb(...args) : void 0;
+	      }).catch(function(args) {
+	        if (Array.isArray(args)) {
+	          return typeof cb === "function" ? cb(...args) : void 0;
+	        } else {
+	          return typeof cb === "function" ? cb(args) : void 0;
+	        }
+	      });
+	      return this._receive(job);
+	    }
+
+	    schedule(...args) {
+	      var job, options, task;
+	      if (typeof args[0] === "function") {
+	        [task, ...args] = args;
+	        options = {};
+	      } else {
+	        [options, task, ...args] = args;
+	      }
+	      job = new Job$1(task, args, options, this.jobDefaults, this.rejectOnDrop, this.Events, this._states, this.Promise);
+	      this._receive(job);
+	      return job.promise;
+	    }
+
+	    wrap(fn) {
+	      var schedule, wrapped;
+	      schedule = this.schedule.bind(this);
+	      wrapped = function(...args) {
+	        return schedule(fn.bind(this), ...args);
+	      };
+	      wrapped.withOptions = function(options, ...args) {
+	        return schedule(options, fn, ...args);
+	      };
+	      return wrapped;
+	    }
+
+	    async updateSettings(options = {}) {
+	      await this._store.__updateSettings__(parser$5.overwrite(options, this.storeDefaults));
+	      parser$5.overwrite(options, this.instanceDefaults, this);
+	      return this;
+	    }
+
+	    currentReservoir() {
+	      return this._store.__currentReservoir__();
+	    }
+
+	    incrementReservoir(incr = 0) {
+	      return this._store.__incrementReservoir__(incr);
+	    }
+
+	  }
+	  Bottleneck.default = Bottleneck;
+
+	  Bottleneck.Events = Events$4;
+
+	  Bottleneck.version = Bottleneck.prototype.version = require$$8.version;
+
+	  Bottleneck.strategy = Bottleneck.prototype.strategy = {
+	    LEAK: 1,
+	    OVERFLOW: 2,
+	    OVERFLOW_PRIORITY: 4,
+	    BLOCK: 3
+	  };
+
+	  Bottleneck.BottleneckError = Bottleneck.prototype.BottleneckError = BottleneckError_1;
+
+	  Bottleneck.Group = Bottleneck.prototype.Group = Group_1;
+
+	  Bottleneck.RedisConnection = Bottleneck.prototype.RedisConnection = require$$2;
+
+	  Bottleneck.IORedisConnection = Bottleneck.prototype.IORedisConnection = require$$3;
+
+	  Bottleneck.Batcher = Bottleneck.prototype.Batcher = Batcher_1;
+
+	  Bottleneck.prototype.jobDefaults = {
+	    priority: DEFAULT_PRIORITY$1,
+	    weight: 1,
+	    expiration: null,
+	    id: "<no-id>"
+	  };
+
+	  Bottleneck.prototype.storeDefaults = {
+	    maxConcurrent: null,
+	    minTime: 0,
+	    highWater: null,
+	    strategy: Bottleneck.prototype.strategy.LEAK,
+	    penalty: null,
+	    reservoir: null,
+	    reservoirRefreshInterval: null,
+	    reservoirRefreshAmount: null,
+	    reservoirIncreaseInterval: null,
+	    reservoirIncreaseAmount: null,
+	    reservoirIncreaseMaximum: null
+	  };
+
+	  Bottleneck.prototype.localStoreDefaults = {
+	    Promise: Promise,
+	    timeout: null,
+	    heartbeatInterval: 250
+	  };
+
+	  Bottleneck.prototype.redisStoreDefaults = {
+	    Promise: Promise,
+	    timeout: null,
+	    heartbeatInterval: 5000,
+	    clientTimeout: 10000,
+	    Redis: null,
+	    clientOptions: {},
+	    clusterNodes: null,
+	    clearDatastore: false,
+	    connection: null
+	  };
+
+	  Bottleneck.prototype.instanceDefaults = {
+	    datastore: "local",
+	    connection: null,
+	    id: "<no-id>",
+	    rejectOnDrop: true,
+	    trackDoneStatus: false,
+	    Promise: Promise
+	  };
+
+	  Bottleneck.prototype.stopDefaults = {
+	    enqueueErrorMessage: "This limiter has been stopped and cannot accept new jobs.",
+	    dropWaitingJobs: true,
+	    dropErrorMessage: "This limiter has been stopped."
+	  };
+
+	  return Bottleneck;
+
+	}).call(commonjsGlobal);
+
+	var Bottleneck_1 = Bottleneck;
+
+	var lib = Bottleneck_1;
+
+	return lib;
+
+})));
+
+
+/***/ }),
+
+/***/ 8932:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+class Deprecation extends Error {
+  constructor(message) {
+    super(message); // Maintains proper stack trace (only available on V8)
+
+    /* istanbul ignore next */
+
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, this.constructor);
+    }
+
+    this.name = 'Deprecation';
+  }
+
+}
+
+exports.Deprecation = Deprecation;
+
+
+/***/ }),
+
+/***/ 1917:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+
+var loader = __nccwpck_require__(1161);
+var dumper = __nccwpck_require__(8866);
+
+
+function renamed(from, to) {
+  return function () {
+    throw new Error('Function yaml.' + from + ' is removed in js-yaml 4. ' +
+      'Use yaml.' + to + ' instead, which is now safe by default.');
+  };
+}
+
+
+module.exports.Type = __nccwpck_require__(6073);
+module.exports.Schema = __nccwpck_require__(1082);
+module.exports.FAILSAFE_SCHEMA = __nccwpck_require__(8562);
+module.exports.JSON_SCHEMA = __nccwpck_require__(1035);
+module.exports.CORE_SCHEMA = __nccwpck_require__(2011);
+module.exports.DEFAULT_SCHEMA = __nccwpck_require__(8759);
+module.exports.load                = loader.load;
+module.exports.loadAll             = loader.loadAll;
+module.exports.dump                = dumper.dump;
+module.exports.YAMLException = __nccwpck_require__(8179);
+
+// Re-export all types in case user wants to create custom schema
+module.exports.types = {
+  binary:    __nccwpck_require__(7900),
+  float:     __nccwpck_require__(2705),
+  map:       __nccwpck_require__(6150),
+  null:      __nccwpck_require__(721),
+  pairs:     __nccwpck_require__(6860),
+  set:       __nccwpck_require__(9548),
+  timestamp: __nccwpck_require__(9212),
+  bool:      __nccwpck_require__(4993),
+  int:       __nccwpck_require__(1615),
+  merge:     __nccwpck_require__(6104),
+  omap:      __nccwpck_require__(9046),
+  seq:       __nccwpck_require__(7283),
+  str:       __nccwpck_require__(3619)
+};
+
+// Removed functions from JS-YAML 3.0.x
+module.exports.safeLoad            = renamed('safeLoad', 'load');
+module.exports.safeLoadAll         = renamed('safeLoadAll', 'loadAll');
+module.exports.safeDump            = renamed('safeDump', 'dump');
+
+
+/***/ }),
+
+/***/ 6829:
+/***/ ((module) => {
+
+
+
+
+function isNothing(subject) {
+  return (typeof subject === 'undefined') || (subject === null);
+}
+
+
+function isObject(subject) {
+  return (typeof subject === 'object') && (subject !== null);
+}
+
+
+function toArray(sequence) {
+  if (Array.isArray(sequence)) return sequence;
+  else if (isNothing(sequence)) return [];
+
+  return [ sequence ];
+}
+
+
+function extend(target, source) {
+  var index, length, key, sourceKeys;
+
+  if (source) {
+    sourceKeys = Object.keys(source);
+
+    for (index = 0, length = sourceKeys.length; index < length; index += 1) {
+      key = sourceKeys[index];
+      target[key] = source[key];
+    }
+  }
+
+  return target;
+}
+
+
+function repeat(string, count) {
+  var result = '', cycle;
+
+  for (cycle = 0; cycle < count; cycle += 1) {
+    result += string;
+  }
+
+  return result;
+}
+
+
+function isNegativeZero(number) {
+  return (number === 0) && (Number.NEGATIVE_INFINITY === 1 / number);
+}
+
+
+module.exports.isNothing      = isNothing;
+module.exports.isObject       = isObject;
+module.exports.toArray        = toArray;
+module.exports.repeat         = repeat;
+module.exports.isNegativeZero = isNegativeZero;
+module.exports.extend         = extend;
+
+
+/***/ }),
+
+/***/ 8866:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+/*eslint-disable no-use-before-define*/
+
+var common              = __nccwpck_require__(6829);
+var YAMLException       = __nccwpck_require__(8179);
+var DEFAULT_SCHEMA      = __nccwpck_require__(8759);
+
+var _toString       = Object.prototype.toString;
+var _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+var CHAR_BOM                  = 0xFEFF;
+var CHAR_TAB                  = 0x09; /* Tab */
+var CHAR_LINE_FEED            = 0x0A; /* LF */
+var CHAR_CARRIAGE_RETURN      = 0x0D; /* CR */
+var CHAR_SPACE                = 0x20; /* Space */
+var CHAR_EXCLAMATION          = 0x21; /* ! */
+var CHAR_DOUBLE_QUOTE         = 0x22; /* " */
+var CHAR_SHARP                = 0x23; /* # */
+var CHAR_PERCENT              = 0x25; /* % */
+var CHAR_AMPERSAND            = 0x26; /* & */
+var CHAR_SINGLE_QUOTE         = 0x27; /* ' */
+var CHAR_ASTERISK             = 0x2A; /* * */
+var CHAR_COMMA                = 0x2C; /* , */
+var CHAR_MINUS                = 0x2D; /* - */
+var CHAR_COLON                = 0x3A; /* : */
+var CHAR_EQUALS               = 0x3D; /* = */
+var CHAR_GREATER_THAN         = 0x3E; /* > */
+var CHAR_QUESTION             = 0x3F; /* ? */
+var CHAR_COMMERCIAL_AT        = 0x40; /* @ */
+var CHAR_LEFT_SQUARE_BRACKET  = 0x5B; /* [ */
+var CHAR_RIGHT_SQUARE_BRACKET = 0x5D; /* ] */
+var CHAR_GRAVE_ACCENT         = 0x60; /* ` */
+var CHAR_LEFT_CURLY_BRACKET   = 0x7B; /* { */
+var CHAR_VERTICAL_LINE        = 0x7C; /* | */
+var CHAR_RIGHT_CURLY_BRACKET  = 0x7D; /* } */
+
+var ESCAPE_SEQUENCES = {};
+
+ESCAPE_SEQUENCES[0x00]   = '\\0';
+ESCAPE_SEQUENCES[0x07]   = '\\a';
+ESCAPE_SEQUENCES[0x08]   = '\\b';
+ESCAPE_SEQUENCES[0x09]   = '\\t';
+ESCAPE_SEQUENCES[0x0A]   = '\\n';
+ESCAPE_SEQUENCES[0x0B]   = '\\v';
+ESCAPE_SEQUENCES[0x0C]   = '\\f';
+ESCAPE_SEQUENCES[0x0D]   = '\\r';
+ESCAPE_SEQUENCES[0x1B]   = '\\e';
+ESCAPE_SEQUENCES[0x22]   = '\\"';
+ESCAPE_SEQUENCES[0x5C]   = '\\\\';
+ESCAPE_SEQUENCES[0x85]   = '\\N';
+ESCAPE_SEQUENCES[0xA0]   = '\\_';
+ESCAPE_SEQUENCES[0x2028] = '\\L';
+ESCAPE_SEQUENCES[0x2029] = '\\P';
+
+var DEPRECATED_BOOLEANS_SYNTAX = [
+  'y', 'Y', 'yes', 'Yes', 'YES', 'on', 'On', 'ON',
+  'n', 'N', 'no', 'No', 'NO', 'off', 'Off', 'OFF'
+];
+
+var DEPRECATED_BASE60_SYNTAX = /^[-+]?[0-9_]+(?::[0-9_]+)+(?:\.[0-9_]*)?$/;
+
+function compileStyleMap(schema, map) {
+  var result, keys, index, length, tag, style, type;
+
+  if (map === null) return {};
+
+  result = {};
+  keys = Object.keys(map);
+
+  for (index = 0, length = keys.length; index < length; index += 1) {
+    tag = keys[index];
+    style = String(map[tag]);
+
+    if (tag.slice(0, 2) === '!!') {
+      tag = 'tag:yaml.org,2002:' + tag.slice(2);
+    }
+    type = schema.compiledTypeMap['fallback'][tag];
+
+    if (type && _hasOwnProperty.call(type.styleAliases, style)) {
+      style = type.styleAliases[style];
+    }
+
+    result[tag] = style;
+  }
+
+  return result;
+}
+
+function encodeHex(character) {
+  var string, handle, length;
+
+  string = character.toString(16).toUpperCase();
+
+  if (character <= 0xFF) {
+    handle = 'x';
+    length = 2;
+  } else if (character <= 0xFFFF) {
+    handle = 'u';
+    length = 4;
+  } else if (character <= 0xFFFFFFFF) {
+    handle = 'U';
+    length = 8;
+  } else {
+    throw new YAMLException('code point within a string may not be greater than 0xFFFFFFFF');
+  }
+
+  return '\\' + handle + common.repeat('0', length - string.length) + string;
+}
+
+
+var QUOTING_TYPE_SINGLE = 1,
+    QUOTING_TYPE_DOUBLE = 2;
+
+function State(options) {
+  this.schema        = options['schema'] || DEFAULT_SCHEMA;
+  this.indent        = Math.max(1, (options['indent'] || 2));
+  this.noArrayIndent = options['noArrayIndent'] || false;
+  this.skipInvalid   = options['skipInvalid'] || false;
+  this.flowLevel     = (common.isNothing(options['flowLevel']) ? -1 : options['flowLevel']);
+  this.styleMap      = compileStyleMap(this.schema, options['styles'] || null);
+  this.sortKeys      = options['sortKeys'] || false;
+  this.lineWidth     = options['lineWidth'] || 80;
+  this.noRefs        = options['noRefs'] || false;
+  this.noCompatMode  = options['noCompatMode'] || false;
+  this.condenseFlow  = options['condenseFlow'] || false;
+  this.quotingType   = options['quotingType'] === '"' ? QUOTING_TYPE_DOUBLE : QUOTING_TYPE_SINGLE;
+  this.forceQuotes   = options['forceQuotes'] || false;
+  this.replacer      = typeof options['replacer'] === 'function' ? options['replacer'] : null;
+
+  this.implicitTypes = this.schema.compiledImplicit;
+  this.explicitTypes = this.schema.compiledExplicit;
+
+  this.tag = null;
+  this.result = '';
+
+  this.duplicates = [];
+  this.usedDuplicates = null;
+}
+
+// Indents every line in a string. Empty lines (\n only) are not indented.
+function indentString(string, spaces) {
+  var ind = common.repeat(' ', spaces),
+      position = 0,
+      next = -1,
+      result = '',
+      line,
+      length = string.length;
+
+  while (position < length) {
+    next = string.indexOf('\n', position);
+    if (next === -1) {
+      line = string.slice(position);
+      position = length;
+    } else {
+      line = string.slice(position, next + 1);
+      position = next + 1;
+    }
+
+    if (line.length && line !== '\n') result += ind;
+
+    result += line;
+  }
+
+  return result;
+}
+
+function generateNextLine(state, level) {
+  return '\n' + common.repeat(' ', state.indent * level);
+}
+
+function testImplicitResolving(state, str) {
+  var index, length, type;
+
+  for (index = 0, length = state.implicitTypes.length; index < length; index += 1) {
+    type = state.implicitTypes[index];
+
+    if (type.resolve(str)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// [33] s-white ::= s-space | s-tab
+function isWhitespace(c) {
+  return c === CHAR_SPACE || c === CHAR_TAB;
+}
+
+// Returns true if the character can be printed without escaping.
+// From YAML 1.2: "any allowed characters known to be non-printable
+// should also be escaped. [However,] This isn’t mandatory"
+// Derived from nb-char - \t - #x85 - #xA0 - #x2028 - #x2029.
+function isPrintable(c) {
+  return  (0x00020 <= c && c <= 0x00007E)
+      || ((0x000A1 <= c && c <= 0x00D7FF) && c !== 0x2028 && c !== 0x2029)
+      || ((0x0E000 <= c && c <= 0x00FFFD) && c !== CHAR_BOM)
+      ||  (0x10000 <= c && c <= 0x10FFFF);
+}
+
+// [34] ns-char ::= nb-char - s-white
+// [27] nb-char ::= c-printable - b-char - c-byte-order-mark
+// [26] b-char  ::= b-line-feed | b-carriage-return
+// Including s-white (for some reason, examples doesn't match specs in this aspect)
+// ns-char ::= c-printable - b-line-feed - b-carriage-return - c-byte-order-mark
+function isNsCharOrWhitespace(c) {
+  return isPrintable(c)
+    && c !== CHAR_BOM
+    // - b-char
+    && c !== CHAR_CARRIAGE_RETURN
+    && c !== CHAR_LINE_FEED;
+}
+
+// [127]  ns-plain-safe(c) ::= c = flow-out  ⇒ ns-plain-safe-out
+//                             c = flow-in   ⇒ ns-plain-safe-in
+//                             c = block-key ⇒ ns-plain-safe-out
+//                             c = flow-key  ⇒ ns-plain-safe-in
+// [128] ns-plain-safe-out ::= ns-char
+// [129]  ns-plain-safe-in ::= ns-char - c-flow-indicator
+// [130]  ns-plain-char(c) ::=  ( ns-plain-safe(c) - “:” - “#” )
+//                            | ( /* An ns-char preceding */ “#” )
+//                            | ( “:” /* Followed by an ns-plain-safe(c) */ )
+function isPlainSafe(c, prev, inblock) {
+  var cIsNsCharOrWhitespace = isNsCharOrWhitespace(c);
+  var cIsNsChar = cIsNsCharOrWhitespace && !isWhitespace(c);
+  return (
+    // ns-plain-safe
+    inblock ? // c = flow-in
+      cIsNsCharOrWhitespace
+      : cIsNsCharOrWhitespace
+        // - c-flow-indicator
+        && c !== CHAR_COMMA
+        && c !== CHAR_LEFT_SQUARE_BRACKET
+        && c !== CHAR_RIGHT_SQUARE_BRACKET
+        && c !== CHAR_LEFT_CURLY_BRACKET
+        && c !== CHAR_RIGHT_CURLY_BRACKET
+  )
+    // ns-plain-char
+    && c !== CHAR_SHARP // false on '#'
+    && !(prev === CHAR_COLON && !cIsNsChar) // false on ': '
+    || (isNsCharOrWhitespace(prev) && !isWhitespace(prev) && c === CHAR_SHARP) // change to true on '[^ ]#'
+    || (prev === CHAR_COLON && cIsNsChar); // change to true on ':[^ ]'
+}
+
+// Simplified test for values allowed as the first character in plain style.
+function isPlainSafeFirst(c) {
+  // Uses a subset of ns-char - c-indicator
+  // where ns-char = nb-char - s-white.
+  // No support of ( ( “?” | “:” | “-” ) /* Followed by an ns-plain-safe(c)) */ ) part
+  return isPrintable(c) && c !== CHAR_BOM
+    && !isWhitespace(c) // - s-white
+    // - (c-indicator ::=
+    // “-” | “?” | “:” | “,” | “[” | “]” | “{” | “}”
+    && c !== CHAR_MINUS
+    && c !== CHAR_QUESTION
+    && c !== CHAR_COLON
+    && c !== CHAR_COMMA
+    && c !== CHAR_LEFT_SQUARE_BRACKET
+    && c !== CHAR_RIGHT_SQUARE_BRACKET
+    && c !== CHAR_LEFT_CURLY_BRACKET
+    && c !== CHAR_RIGHT_CURLY_BRACKET
+    // | “#” | “&” | “*” | “!” | “|” | “=” | “>” | “'” | “"”
+    && c !== CHAR_SHARP
+    && c !== CHAR_AMPERSAND
+    && c !== CHAR_ASTERISK
+    && c !== CHAR_EXCLAMATION
+    && c !== CHAR_VERTICAL_LINE
+    && c !== CHAR_EQUALS
+    && c !== CHAR_GREATER_THAN
+    && c !== CHAR_SINGLE_QUOTE
+    && c !== CHAR_DOUBLE_QUOTE
+    // | “%” | “@” | “`”)
+    && c !== CHAR_PERCENT
+    && c !== CHAR_COMMERCIAL_AT
+    && c !== CHAR_GRAVE_ACCENT;
+}
+
+// Simplified test for values allowed as the last character in plain style.
+function isPlainSafeLast(c) {
+  // just not whitespace or colon, it will be checked to be plain character later
+  return !isWhitespace(c) && c !== CHAR_COLON;
+}
+
+// Same as 'string'.codePointAt(pos), but works in older browsers.
+function codePointAt(string, pos) {
+  var first = string.charCodeAt(pos), second;
+  if (first >= 0xD800 && first <= 0xDBFF && pos + 1 < string.length) {
+    second = string.charCodeAt(pos + 1);
+    if (second >= 0xDC00 && second <= 0xDFFF) {
+      // https://mathiasbynens.be/notes/javascript-encoding#surrogate-formulae
+      return (first - 0xD800) * 0x400 + second - 0xDC00 + 0x10000;
+    }
+  }
+  return first;
+}
+
+// Determines whether block indentation indicator is required.
+function needIndentIndicator(string) {
+  var leadingSpaceRe = /^\n* /;
+  return leadingSpaceRe.test(string);
+}
+
+var STYLE_PLAIN   = 1,
+    STYLE_SINGLE  = 2,
+    STYLE_LITERAL = 3,
+    STYLE_FOLDED  = 4,
+    STYLE_DOUBLE  = 5;
+
+// Determines which scalar styles are possible and returns the preferred style.
+// lineWidth = -1 => no limit.
+// Pre-conditions: str.length > 0.
+// Post-conditions:
+//    STYLE_PLAIN or STYLE_SINGLE => no \n are in the string.
+//    STYLE_LITERAL => no lines are suitable for folding (or lineWidth is -1).
+//    STYLE_FOLDED => a line > lineWidth and can be folded (and lineWidth != -1).
+function chooseScalarStyle(string, singleLineOnly, indentPerLevel, lineWidth,
+  testAmbiguousType, quotingType, forceQuotes, inblock) {
+
+  var i;
+  var char = 0;
+  var prevChar = null;
+  var hasLineBreak = false;
+  var hasFoldableLine = false; // only checked if shouldTrackWidth
+  var shouldTrackWidth = lineWidth !== -1;
+  var previousLineBreak = -1; // count the first line correctly
+  var plain = isPlainSafeFirst(codePointAt(string, 0))
+          && isPlainSafeLast(codePointAt(string, string.length - 1));
+
+  if (singleLineOnly || forceQuotes) {
+    // Case: no block styles.
+    // Check for disallowed characters to rule out plain and single.
+    for (i = 0; i < string.length; char >= 0x10000 ? i += 2 : i++) {
+      char = codePointAt(string, i);
+      if (!isPrintable(char)) {
+        return STYLE_DOUBLE;
+      }
+      plain = plain && isPlainSafe(char, prevChar, inblock);
+      prevChar = char;
+    }
+  } else {
+    // Case: block styles permitted.
+    for (i = 0; i < string.length; char >= 0x10000 ? i += 2 : i++) {
+      char = codePointAt(string, i);
+      if (char === CHAR_LINE_FEED) {
+        hasLineBreak = true;
+        // Check if any line can be folded.
+        if (shouldTrackWidth) {
+          hasFoldableLine = hasFoldableLine ||
+            // Foldable line = too long, and not more-indented.
+            (i - previousLineBreak - 1 > lineWidth &&
+             string[previousLineBreak + 1] !== ' ');
+          previousLineBreak = i;
+        }
+      } else if (!isPrintable(char)) {
+        return STYLE_DOUBLE;
+      }
+      plain = plain && isPlainSafe(char, prevChar, inblock);
+      prevChar = char;
+    }
+    // in case the end is missing a \n
+    hasFoldableLine = hasFoldableLine || (shouldTrackWidth &&
+      (i - previousLineBreak - 1 > lineWidth &&
+       string[previousLineBreak + 1] !== ' '));
+  }
+  // Although every style can represent \n without escaping, prefer block styles
+  // for multiline, since they're more readable and they don't add empty lines.
+  // Also prefer folding a super-long line.
+  if (!hasLineBreak && !hasFoldableLine) {
+    // Strings interpretable as another type have to be quoted;
+    // e.g. the string 'true' vs. the boolean true.
+    if (plain && !forceQuotes && !testAmbiguousType(string)) {
+      return STYLE_PLAIN;
+    }
+    return quotingType === QUOTING_TYPE_DOUBLE ? STYLE_DOUBLE : STYLE_SINGLE;
+  }
+  // Edge case: block indentation indicator can only have one digit.
+  if (indentPerLevel > 9 && needIndentIndicator(string)) {
+    return STYLE_DOUBLE;
+  }
+  // At this point we know block styles are valid.
+  // Prefer literal style unless we want to fold.
+  if (!forceQuotes) {
+    return hasFoldableLine ? STYLE_FOLDED : STYLE_LITERAL;
+  }
+  return quotingType === QUOTING_TYPE_DOUBLE ? STYLE_DOUBLE : STYLE_SINGLE;
+}
+
+// Note: line breaking/folding is implemented for only the folded style.
+// NB. We drop the last trailing newline (if any) of a returned block scalar
+//  since the dumper adds its own newline. This always works:
+//    • No ending newline => unaffected; already using strip "-" chomping.
+//    • Ending newline    => removed then restored.
+//  Importantly, this keeps the "+" chomp indicator from gaining an extra line.
+function writeScalar(state, string, level, iskey, inblock) {
+  state.dump = (function () {
+    if (string.length === 0) {
+      return state.quotingType === QUOTING_TYPE_DOUBLE ? '""' : "''";
+    }
+    if (!state.noCompatMode) {
+      if (DEPRECATED_BOOLEANS_SYNTAX.indexOf(string) !== -1 || DEPRECATED_BASE60_SYNTAX.test(string)) {
+        return state.quotingType === QUOTING_TYPE_DOUBLE ? ('"' + string + '"') : ("'" + string + "'");
+      }
+    }
+
+    var indent = state.indent * Math.max(1, level); // no 0-indent scalars
+    // As indentation gets deeper, let the width decrease monotonically
+    // to the lower bound min(state.lineWidth, 40).
+    // Note that this implies
+    //  state.lineWidth ≤ 40 + state.indent: width is fixed at the lower bound.
+    //  state.lineWidth > 40 + state.indent: width decreases until the lower bound.
+    // This behaves better than a constant minimum width which disallows narrower options,
+    // or an indent threshold which causes the width to suddenly increase.
+    var lineWidth = state.lineWidth === -1
+      ? -1 : Math.max(Math.min(state.lineWidth, 40), state.lineWidth - indent);
+
+    // Without knowing if keys are implicit/explicit, assume implicit for safety.
+    var singleLineOnly = iskey
+      // No block styles in flow mode.
+      || (state.flowLevel > -1 && level >= state.flowLevel);
+    function testAmbiguity(string) {
+      return testImplicitResolving(state, string);
+    }
+
+    switch (chooseScalarStyle(string, singleLineOnly, state.indent, lineWidth,
+      testAmbiguity, state.quotingType, state.forceQuotes && !iskey, inblock)) {
+
+      case STYLE_PLAIN:
+        return string;
+      case STYLE_SINGLE:
+        return "'" + string.replace(/'/g, "''") + "'";
+      case STYLE_LITERAL:
+        return '|' + blockHeader(string, state.indent)
+          + dropEndingNewline(indentString(string, indent));
+      case STYLE_FOLDED:
+        return '>' + blockHeader(string, state.indent)
+          + dropEndingNewline(indentString(foldString(string, lineWidth), indent));
+      case STYLE_DOUBLE:
+        return '"' + escapeString(string, lineWidth) + '"';
+      default:
+        throw new YAMLException('impossible error: invalid scalar style');
+    }
+  }());
+}
+
+// Pre-conditions: string is valid for a block scalar, 1 <= indentPerLevel <= 9.
+function blockHeader(string, indentPerLevel) {
+  var indentIndicator = needIndentIndicator(string) ? String(indentPerLevel) : '';
+
+  // note the special case: the string '\n' counts as a "trailing" empty line.
+  var clip =          string[string.length - 1] === '\n';
+  var keep = clip && (string[string.length - 2] === '\n' || string === '\n');
+  var chomp = keep ? '+' : (clip ? '' : '-');
+
+  return indentIndicator + chomp + '\n';
+}
+
+// (See the note for writeScalar.)
+function dropEndingNewline(string) {
+  return string[string.length - 1] === '\n' ? string.slice(0, -1) : string;
+}
+
+// Note: a long line without a suitable break point will exceed the width limit.
+// Pre-conditions: every char in str isPrintable, str.length > 0, width > 0.
+function foldString(string, width) {
+  // In folded style, $k$ consecutive newlines output as $k+1$ newlines—
+  // unless they're before or after a more-indented line, or at the very
+  // beginning or end, in which case $k$ maps to $k$.
+  // Therefore, parse each chunk as newline(s) followed by a content line.
+  var lineRe = /(\n+)([^\n]*)/g;
+
+  // first line (possibly an empty line)
+  var result = (function () {
+    var nextLF = string.indexOf('\n');
+    nextLF = nextLF !== -1 ? nextLF : string.length;
+    lineRe.lastIndex = nextLF;
+    return foldLine(string.slice(0, nextLF), width);
+  }());
+  // If we haven't reached the first content line yet, don't add an extra \n.
+  var prevMoreIndented = string[0] === '\n' || string[0] === ' ';
+  var moreIndented;
+
+  // rest of the lines
+  var match;
+  while ((match = lineRe.exec(string))) {
+    var prefix = match[1], line = match[2];
+    moreIndented = (line[0] === ' ');
+    result += prefix
+      + (!prevMoreIndented && !moreIndented && line !== ''
+        ? '\n' : '')
+      + foldLine(line, width);
+    prevMoreIndented = moreIndented;
+  }
+
+  return result;
+}
+
+// Greedy line breaking.
+// Picks the longest line under the limit each time,
+// otherwise settles for the shortest line over the limit.
+// NB. More-indented lines *cannot* be folded, as that would add an extra \n.
+function foldLine(line, width) {
+  if (line === '' || line[0] === ' ') return line;
+
+  // Since a more-indented line adds a \n, breaks can't be followed by a space.
+  var breakRe = / [^ ]/g; // note: the match index will always be <= length-2.
+  var match;
+  // start is an inclusive index. end, curr, and next are exclusive.
+  var start = 0, end, curr = 0, next = 0;
+  var result = '';
+
+  // Invariants: 0 <= start <= length-1.
+  //   0 <= curr <= next <= max(0, length-2). curr - start <= width.
+  // Inside the loop:
+  //   A match implies length >= 2, so curr and next are <= length-2.
+  while ((match = breakRe.exec(line))) {
+    next = match.index;
+    // maintain invariant: curr - start <= width
+    if (next - start > width) {
+      end = (curr > start) ? curr : next; // derive end <= length-2
+      result += '\n' + line.slice(start, end);
+      // skip the space that was output as \n
+      start = end + 1;                    // derive start <= length-1
+    }
+    curr = next;
+  }
+
+  // By the invariants, start <= length-1, so there is something left over.
+  // It is either the whole string or a part starting from non-whitespace.
+  result += '\n';
+  // Insert a break if the remainder is too long and there is a break available.
+  if (line.length - start > width && curr > start) {
+    result += line.slice(start, curr) + '\n' + line.slice(curr + 1);
+  } else {
+    result += line.slice(start);
+  }
+
+  return result.slice(1); // drop extra \n joiner
+}
+
+// Escapes a double-quoted string.
+function escapeString(string) {
+  var result = '';
+  var char = 0;
+  var escapeSeq;
+
+  for (var i = 0; i < string.length; char >= 0x10000 ? i += 2 : i++) {
+    char = codePointAt(string, i);
+    escapeSeq = ESCAPE_SEQUENCES[char];
+
+    if (!escapeSeq && isPrintable(char)) {
+      result += string[i];
+      if (char >= 0x10000) result += string[i + 1];
+    } else {
+      result += escapeSeq || encodeHex(char);
+    }
+  }
+
+  return result;
+}
+
+function writeFlowSequence(state, level, object) {
+  var _result = '',
+      _tag    = state.tag,
+      index,
+      length,
+      value;
+
+  for (index = 0, length = object.length; index < length; index += 1) {
+    value = object[index];
+
+    if (state.replacer) {
+      value = state.replacer.call(object, String(index), value);
+    }
+
+    // Write only valid elements, put null instead of invalid elements.
+    if (writeNode(state, level, value, false, false) ||
+        (typeof value === 'undefined' &&
+         writeNode(state, level, null, false, false))) {
+
+      if (_result !== '') _result += ',' + (!state.condenseFlow ? ' ' : '');
+      _result += state.dump;
+    }
+  }
+
+  state.tag = _tag;
+  state.dump = '[' + _result + ']';
+}
+
+function writeBlockSequence(state, level, object, compact) {
+  var _result = '',
+      _tag    = state.tag,
+      index,
+      length,
+      value;
+
+  for (index = 0, length = object.length; index < length; index += 1) {
+    value = object[index];
+
+    if (state.replacer) {
+      value = state.replacer.call(object, String(index), value);
+    }
+
+    // Write only valid elements, put null instead of invalid elements.
+    if (writeNode(state, level + 1, value, true, true, false, true) ||
+        (typeof value === 'undefined' &&
+         writeNode(state, level + 1, null, true, true, false, true))) {
+
+      if (!compact || _result !== '') {
+        _result += generateNextLine(state, level);
+      }
+
+      if (state.dump && CHAR_LINE_FEED === state.dump.charCodeAt(0)) {
+        _result += '-';
+      } else {
+        _result += '- ';
+      }
+
+      _result += state.dump;
+    }
+  }
+
+  state.tag = _tag;
+  state.dump = _result || '[]'; // Empty sequence if no valid values.
+}
+
+function writeFlowMapping(state, level, object) {
+  var _result       = '',
+      _tag          = state.tag,
+      objectKeyList = Object.keys(object),
+      index,
+      length,
+      objectKey,
+      objectValue,
+      pairBuffer;
+
+  for (index = 0, length = objectKeyList.length; index < length; index += 1) {
+
+    pairBuffer = '';
+    if (_result !== '') pairBuffer += ', ';
+
+    if (state.condenseFlow) pairBuffer += '"';
+
+    objectKey = objectKeyList[index];
+    objectValue = object[objectKey];
+
+    if (state.replacer) {
+      objectValue = state.replacer.call(object, objectKey, objectValue);
+    }
+
+    if (!writeNode(state, level, objectKey, false, false)) {
+      continue; // Skip this pair because of invalid key;
+    }
+
+    if (state.dump.length > 1024) pairBuffer += '? ';
+
+    pairBuffer += state.dump + (state.condenseFlow ? '"' : '') + ':' + (state.condenseFlow ? '' : ' ');
+
+    if (!writeNode(state, level, objectValue, false, false)) {
+      continue; // Skip this pair because of invalid value.
+    }
+
+    pairBuffer += state.dump;
+
+    // Both key and value are valid.
+    _result += pairBuffer;
+  }
+
+  state.tag = _tag;
+  state.dump = '{' + _result + '}';
+}
+
+function writeBlockMapping(state, level, object, compact) {
+  var _result       = '',
+      _tag          = state.tag,
+      objectKeyList = Object.keys(object),
+      index,
+      length,
+      objectKey,
+      objectValue,
+      explicitPair,
+      pairBuffer;
+
+  // Allow sorting keys so that the output file is deterministic
+  if (state.sortKeys === true) {
+    // Default sorting
+    objectKeyList.sort();
+  } else if (typeof state.sortKeys === 'function') {
+    // Custom sort function
+    objectKeyList.sort(state.sortKeys);
+  } else if (state.sortKeys) {
+    // Something is wrong
+    throw new YAMLException('sortKeys must be a boolean or a function');
+  }
+
+  for (index = 0, length = objectKeyList.length; index < length; index += 1) {
+    pairBuffer = '';
+
+    if (!compact || _result !== '') {
+      pairBuffer += generateNextLine(state, level);
+    }
+
+    objectKey = objectKeyList[index];
+    objectValue = object[objectKey];
+
+    if (state.replacer) {
+      objectValue = state.replacer.call(object, objectKey, objectValue);
+    }
+
+    if (!writeNode(state, level + 1, objectKey, true, true, true)) {
+      continue; // Skip this pair because of invalid key.
+    }
+
+    explicitPair = (state.tag !== null && state.tag !== '?') ||
+                   (state.dump && state.dump.length > 1024);
+
+    if (explicitPair) {
+      if (state.dump && CHAR_LINE_FEED === state.dump.charCodeAt(0)) {
+        pairBuffer += '?';
+      } else {
+        pairBuffer += '? ';
+      }
+    }
+
+    pairBuffer += state.dump;
+
+    if (explicitPair) {
+      pairBuffer += generateNextLine(state, level);
+    }
+
+    if (!writeNode(state, level + 1, objectValue, true, explicitPair)) {
+      continue; // Skip this pair because of invalid value.
+    }
+
+    if (state.dump && CHAR_LINE_FEED === state.dump.charCodeAt(0)) {
+      pairBuffer += ':';
+    } else {
+      pairBuffer += ': ';
+    }
+
+    pairBuffer += state.dump;
+
+    // Both key and value are valid.
+    _result += pairBuffer;
+  }
+
+  state.tag = _tag;
+  state.dump = _result || '{}'; // Empty mapping if no valid pairs.
+}
+
+function detectType(state, object, explicit) {
+  var _result, typeList, index, length, type, style;
+
+  typeList = explicit ? state.explicitTypes : state.implicitTypes;
+
+  for (index = 0, length = typeList.length; index < length; index += 1) {
+    type = typeList[index];
+
+    if ((type.instanceOf  || type.predicate) &&
+        (!type.instanceOf || ((typeof object === 'object') && (object instanceof type.instanceOf))) &&
+        (!type.predicate  || type.predicate(object))) {
+
+      if (explicit) {
+        if (type.multi && type.representName) {
+          state.tag = type.representName(object);
+        } else {
+          state.tag = type.tag;
+        }
+      } else {
+        state.tag = '?';
+      }
+
+      if (type.represent) {
+        style = state.styleMap[type.tag] || type.defaultStyle;
+
+        if (_toString.call(type.represent) === '[object Function]') {
+          _result = type.represent(object, style);
+        } else if (_hasOwnProperty.call(type.represent, style)) {
+          _result = type.represent[style](object, style);
+        } else {
+          throw new YAMLException('!<' + type.tag + '> tag resolver accepts not "' + style + '" style');
+        }
+
+        state.dump = _result;
+      }
+
+      return true;
+    }
+  }
+
+  return false;
+}
+
+// Serializes `object` and writes it to global `result`.
+// Returns true on success, or false on invalid object.
+//
+function writeNode(state, level, object, block, compact, iskey, isblockseq) {
+  state.tag = null;
+  state.dump = object;
+
+  if (!detectType(state, object, false)) {
+    detectType(state, object, true);
+  }
+
+  var type = _toString.call(state.dump);
+  var inblock = block;
+  var tagStr;
+
+  if (block) {
+    block = (state.flowLevel < 0 || state.flowLevel > level);
+  }
+
+  var objectOrArray = type === '[object Object]' || type === '[object Array]',
+      duplicateIndex,
+      duplicate;
+
+  if (objectOrArray) {
+    duplicateIndex = state.duplicates.indexOf(object);
+    duplicate = duplicateIndex !== -1;
+  }
+
+  if ((state.tag !== null && state.tag !== '?') || duplicate || (state.indent !== 2 && level > 0)) {
+    compact = false;
+  }
+
+  if (duplicate && state.usedDuplicates[duplicateIndex]) {
+    state.dump = '*ref_' + duplicateIndex;
+  } else {
+    if (objectOrArray && duplicate && !state.usedDuplicates[duplicateIndex]) {
+      state.usedDuplicates[duplicateIndex] = true;
+    }
+    if (type === '[object Object]') {
+      if (block && (Object.keys(state.dump).length !== 0)) {
+        writeBlockMapping(state, level, state.dump, compact);
+        if (duplicate) {
+          state.dump = '&ref_' + duplicateIndex + state.dump;
+        }
+      } else {
+        writeFlowMapping(state, level, state.dump);
+        if (duplicate) {
+          state.dump = '&ref_' + duplicateIndex + ' ' + state.dump;
+        }
+      }
+    } else if (type === '[object Array]') {
+      if (block && (state.dump.length !== 0)) {
+        if (state.noArrayIndent && !isblockseq && level > 0) {
+          writeBlockSequence(state, level - 1, state.dump, compact);
+        } else {
+          writeBlockSequence(state, level, state.dump, compact);
+        }
+        if (duplicate) {
+          state.dump = '&ref_' + duplicateIndex + state.dump;
+        }
+      } else {
+        writeFlowSequence(state, level, state.dump);
+        if (duplicate) {
+          state.dump = '&ref_' + duplicateIndex + ' ' + state.dump;
+        }
+      }
+    } else if (type === '[object String]') {
+      if (state.tag !== '?') {
+        writeScalar(state, state.dump, level, iskey, inblock);
+      }
+    } else if (type === '[object Undefined]') {
+      return false;
+    } else {
+      if (state.skipInvalid) return false;
+      throw new YAMLException('unacceptable kind of an object to dump ' + type);
+    }
+
+    if (state.tag !== null && state.tag !== '?') {
+      // Need to encode all characters except those allowed by the spec:
+      //
+      // [35] ns-dec-digit    ::=  [#x30-#x39] /* 0-9 */
+      // [36] ns-hex-digit    ::=  ns-dec-digit
+      //                         | [#x41-#x46] /* A-F */ | [#x61-#x66] /* a-f */
+      // [37] ns-ascii-letter ::=  [#x41-#x5A] /* A-Z */ | [#x61-#x7A] /* a-z */
+      // [38] ns-word-char    ::=  ns-dec-digit | ns-ascii-letter | “-”
+      // [39] ns-uri-char     ::=  “%” ns-hex-digit ns-hex-digit | ns-word-char | “#”
+      //                         | “;” | “/” | “?” | “:” | “@” | “&” | “=” | “+” | “$” | “,”
+      //                         | “_” | “.” | “!” | “~” | “*” | “'” | “(” | “)” | “[” | “]”
+      //
+      // Also need to encode '!' because it has special meaning (end of tag prefix).
+      //
+      tagStr = encodeURI(
+        state.tag[0] === '!' ? state.tag.slice(1) : state.tag
+      ).replace(/!/g, '%21');
+
+      if (state.tag[0] === '!') {
+        tagStr = '!' + tagStr;
+      } else if (tagStr.slice(0, 18) === 'tag:yaml.org,2002:') {
+        tagStr = '!!' + tagStr.slice(18);
+      } else {
+        tagStr = '!<' + tagStr + '>';
+      }
+
+      state.dump = tagStr + ' ' + state.dump;
+    }
+  }
+
+  return true;
+}
+
+function getDuplicateReferences(object, state) {
+  var objects = [],
+      duplicatesIndexes = [],
+      index,
+      length;
+
+  inspectNode(object, objects, duplicatesIndexes);
+
+  for (index = 0, length = duplicatesIndexes.length; index < length; index += 1) {
+    state.duplicates.push(objects[duplicatesIndexes[index]]);
+  }
+  state.usedDuplicates = new Array(length);
+}
+
+function inspectNode(object, objects, duplicatesIndexes) {
+  var objectKeyList,
+      index,
+      length;
+
+  if (object !== null && typeof object === 'object') {
+    index = objects.indexOf(object);
+    if (index !== -1) {
+      if (duplicatesIndexes.indexOf(index) === -1) {
+        duplicatesIndexes.push(index);
+      }
+    } else {
+      objects.push(object);
+
+      if (Array.isArray(object)) {
+        for (index = 0, length = object.length; index < length; index += 1) {
+          inspectNode(object[index], objects, duplicatesIndexes);
+        }
+      } else {
+        objectKeyList = Object.keys(object);
+
+        for (index = 0, length = objectKeyList.length; index < length; index += 1) {
+          inspectNode(object[objectKeyList[index]], objects, duplicatesIndexes);
+        }
+      }
+    }
+  }
+}
+
+function dump(input, options) {
+  options = options || {};
+
+  var state = new State(options);
+
+  if (!state.noRefs) getDuplicateReferences(input, state);
+
+  var value = input;
+
+  if (state.replacer) {
+    value = state.replacer.call({ '': value }, '', value);
+  }
+
+  if (writeNode(state, 0, value, true, true)) return state.dump + '\n';
+
+  return '';
+}
+
+module.exports.dump = dump;
+
+
+/***/ }),
+
+/***/ 8179:
+/***/ ((module) => {
+
+// YAML error class. http://stackoverflow.com/questions/8458984
+//
+
+
+
+function formatError(exception, compact) {
+  var where = '', message = exception.reason || '(unknown reason)';
+
+  if (!exception.mark) return message;
+
+  if (exception.mark.name) {
+    where += 'in "' + exception.mark.name + '" ';
+  }
+
+  where += '(' + (exception.mark.line + 1) + ':' + (exception.mark.column + 1) + ')';
+
+  if (!compact && exception.mark.snippet) {
+    where += '\n\n' + exception.mark.snippet;
+  }
+
+  return message + ' ' + where;
+}
+
+
+function YAMLException(reason, mark) {
+  // Super constructor
+  Error.call(this);
+
+  this.name = 'YAMLException';
+  this.reason = reason;
+  this.mark = mark;
+  this.message = formatError(this, false);
+
+  // Include stack trace in error object
+  if (Error.captureStackTrace) {
+    // Chrome and NodeJS
+    Error.captureStackTrace(this, this.constructor);
+  } else {
+    // FF, IE 10+ and Safari 6+. Fallback for others
+    this.stack = (new Error()).stack || '';
+  }
+}
+
+
+// Inherit from Error
+YAMLException.prototype = Object.create(Error.prototype);
+YAMLException.prototype.constructor = YAMLException;
+
+
+YAMLException.prototype.toString = function toString(compact) {
+  return this.name + ': ' + formatError(this, compact);
+};
+
+
+module.exports = YAMLException;
+
+
+/***/ }),
+
+/***/ 1161:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+/*eslint-disable max-len,no-use-before-define*/
+
+var common              = __nccwpck_require__(6829);
+var YAMLException       = __nccwpck_require__(8179);
+var makeSnippet         = __nccwpck_require__(6975);
+var DEFAULT_SCHEMA      = __nccwpck_require__(8759);
+
+
+var _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+
+var CONTEXT_FLOW_IN   = 1;
+var CONTEXT_FLOW_OUT  = 2;
+var CONTEXT_BLOCK_IN  = 3;
+var CONTEXT_BLOCK_OUT = 4;
+
+
+var CHOMPING_CLIP  = 1;
+var CHOMPING_STRIP = 2;
+var CHOMPING_KEEP  = 3;
+
+
+var PATTERN_NON_PRINTABLE         = /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x84\x86-\x9F\uFFFE\uFFFF]|[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?:[^\uD800-\uDBFF]|^)[\uDC00-\uDFFF]/;
+var PATTERN_NON_ASCII_LINE_BREAKS = /[\x85\u2028\u2029]/;
+var PATTERN_FLOW_INDICATORS       = /[,\[\]\{\}]/;
+var PATTERN_TAG_HANDLE            = /^(?:!|!!|![a-z\-]+!)$/i;
+var PATTERN_TAG_URI               = /^(?:!|[^,\[\]\{\}])(?:%[0-9a-f]{2}|[0-9a-z\-#;\/\?:@&=\+\$,_\.!~\*'\(\)\[\]])*$/i;
+
+
+function _class(obj) { return Object.prototype.toString.call(obj); }
+
+function is_EOL(c) {
+  return (c === 0x0A/* LF */) || (c === 0x0D/* CR */);
+}
+
+function is_WHITE_SPACE(c) {
+  return (c === 0x09/* Tab */) || (c === 0x20/* Space */);
+}
+
+function is_WS_OR_EOL(c) {
+  return (c === 0x09/* Tab */) ||
+         (c === 0x20/* Space */) ||
+         (c === 0x0A/* LF */) ||
+         (c === 0x0D/* CR */);
+}
+
+function is_FLOW_INDICATOR(c) {
+  return c === 0x2C/* , */ ||
+         c === 0x5B/* [ */ ||
+         c === 0x5D/* ] */ ||
+         c === 0x7B/* { */ ||
+         c === 0x7D/* } */;
+}
+
+function fromHexCode(c) {
+  var lc;
+
+  if ((0x30/* 0 */ <= c) && (c <= 0x39/* 9 */)) {
+    return c - 0x30;
+  }
+
+  /*eslint-disable no-bitwise*/
+  lc = c | 0x20;
+
+  if ((0x61/* a */ <= lc) && (lc <= 0x66/* f */)) {
+    return lc - 0x61 + 10;
+  }
+
+  return -1;
+}
+
+function escapedHexLen(c) {
+  if (c === 0x78/* x */) { return 2; }
+  if (c === 0x75/* u */) { return 4; }
+  if (c === 0x55/* U */) { return 8; }
+  return 0;
+}
+
+function fromDecimalCode(c) {
+  if ((0x30/* 0 */ <= c) && (c <= 0x39/* 9 */)) {
+    return c - 0x30;
+  }
+
+  return -1;
+}
+
+function simpleEscapeSequence(c) {
+  /* eslint-disable indent */
+  return (c === 0x30/* 0 */) ? '\x00' :
+        (c === 0x61/* a */) ? '\x07' :
+        (c === 0x62/* b */) ? '\x08' :
+        (c === 0x74/* t */) ? '\x09' :
+        (c === 0x09/* Tab */) ? '\x09' :
+        (c === 0x6E/* n */) ? '\x0A' :
+        (c === 0x76/* v */) ? '\x0B' :
+        (c === 0x66/* f */) ? '\x0C' :
+        (c === 0x72/* r */) ? '\x0D' :
+        (c === 0x65/* e */) ? '\x1B' :
+        (c === 0x20/* Space */) ? ' ' :
+        (c === 0x22/* " */) ? '\x22' :
+        (c === 0x2F/* / */) ? '/' :
+        (c === 0x5C/* \ */) ? '\x5C' :
+        (c === 0x4E/* N */) ? '\x85' :
+        (c === 0x5F/* _ */) ? '\xA0' :
+        (c === 0x4C/* L */) ? '\u2028' :
+        (c === 0x50/* P */) ? '\u2029' : '';
+}
+
+function charFromCodepoint(c) {
+  if (c <= 0xFFFF) {
+    return String.fromCharCode(c);
+  }
+  // Encode UTF-16 surrogate pair
+  // https://en.wikipedia.org/wiki/UTF-16#Code_points_U.2B010000_to_U.2B10FFFF
+  return String.fromCharCode(
+    ((c - 0x010000) >> 10) + 0xD800,
+    ((c - 0x010000) & 0x03FF) + 0xDC00
+  );
+}
+
+var simpleEscapeCheck = new Array(256); // integer, for fast access
+var simpleEscapeMap = new Array(256);
+for (var i = 0; i < 256; i++) {
+  simpleEscapeCheck[i] = simpleEscapeSequence(i) ? 1 : 0;
+  simpleEscapeMap[i] = simpleEscapeSequence(i);
+}
+
+
+function State(input, options) {
+  this.input = input;
+
+  this.filename  = options['filename']  || null;
+  this.schema    = options['schema']    || DEFAULT_SCHEMA;
+  this.onWarning = options['onWarning'] || null;
+  // (Hidden) Remove? makes the loader to expect YAML 1.1 documents
+  // if such documents have no explicit %YAML directive
+  this.legacy    = options['legacy']    || false;
+
+  this.json      = options['json']      || false;
+  this.listener  = options['listener']  || null;
+
+  this.implicitTypes = this.schema.compiledImplicit;
+  this.typeMap       = this.schema.compiledTypeMap;
+
+  this.length     = input.length;
+  this.position   = 0;
+  this.line       = 0;
+  this.lineStart  = 0;
+  this.lineIndent = 0;
+
+  // position of first leading tab in the current line,
+  // used to make sure there are no tabs in the indentation
+  this.firstTabInLine = -1;
+
+  this.documents = [];
+
+  /*
+  this.version;
+  this.checkLineBreaks;
+  this.tagMap;
+  this.anchorMap;
+  this.tag;
+  this.anchor;
+  this.kind;
+  this.result;*/
+
+}
+
+
+function generateError(state, message) {
+  var mark = {
+    name:     state.filename,
+    buffer:   state.input.slice(0, -1), // omit trailing \0
+    position: state.position,
+    line:     state.line,
+    column:   state.position - state.lineStart
+  };
+
+  mark.snippet = makeSnippet(mark);
+
+  return new YAMLException(message, mark);
+}
+
+function throwError(state, message) {
+  throw generateError(state, message);
+}
+
+function throwWarning(state, message) {
+  if (state.onWarning) {
+    state.onWarning.call(null, generateError(state, message));
+  }
+}
+
+
+var directiveHandlers = {
+
+  YAML: function handleYamlDirective(state, name, args) {
+
+    var match, major, minor;
+
+    if (state.version !== null) {
+      throwError(state, 'duplication of %YAML directive');
+    }
+
+    if (args.length !== 1) {
+      throwError(state, 'YAML directive accepts exactly one argument');
+    }
+
+    match = /^([0-9]+)\.([0-9]+)$/.exec(args[0]);
+
+    if (match === null) {
+      throwError(state, 'ill-formed argument of the YAML directive');
+    }
+
+    major = parseInt(match[1], 10);
+    minor = parseInt(match[2], 10);
+
+    if (major !== 1) {
+      throwError(state, 'unacceptable YAML version of the document');
+    }
+
+    state.version = args[0];
+    state.checkLineBreaks = (minor < 2);
+
+    if (minor !== 1 && minor !== 2) {
+      throwWarning(state, 'unsupported YAML version of the document');
+    }
+  },
+
+  TAG: function handleTagDirective(state, name, args) {
+
+    var handle, prefix;
+
+    if (args.length !== 2) {
+      throwError(state, 'TAG directive accepts exactly two arguments');
+    }
+
+    handle = args[0];
+    prefix = args[1];
+
+    if (!PATTERN_TAG_HANDLE.test(handle)) {
+      throwError(state, 'ill-formed tag handle (first argument) of the TAG directive');
+    }
+
+    if (_hasOwnProperty.call(state.tagMap, handle)) {
+      throwError(state, 'there is a previously declared suffix for "' + handle + '" tag handle');
+    }
+
+    if (!PATTERN_TAG_URI.test(prefix)) {
+      throwError(state, 'ill-formed tag prefix (second argument) of the TAG directive');
+    }
+
+    try {
+      prefix = decodeURIComponent(prefix);
+    } catch (err) {
+      throwError(state, 'tag prefix is malformed: ' + prefix);
+    }
+
+    state.tagMap[handle] = prefix;
+  }
+};
+
+
+function captureSegment(state, start, end, checkJson) {
+  var _position, _length, _character, _result;
+
+  if (start < end) {
+    _result = state.input.slice(start, end);
+
+    if (checkJson) {
+      for (_position = 0, _length = _result.length; _position < _length; _position += 1) {
+        _character = _result.charCodeAt(_position);
+        if (!(_character === 0x09 ||
+              (0x20 <= _character && _character <= 0x10FFFF))) {
+          throwError(state, 'expected valid JSON character');
+        }
+      }
+    } else if (PATTERN_NON_PRINTABLE.test(_result)) {
+      throwError(state, 'the stream contains non-printable characters');
+    }
+
+    state.result += _result;
+  }
+}
+
+function mergeMappings(state, destination, source, overridableKeys) {
+  var sourceKeys, key, index, quantity;
+
+  if (!common.isObject(source)) {
+    throwError(state, 'cannot merge mappings; the provided source object is unacceptable');
+  }
+
+  sourceKeys = Object.keys(source);
+
+  for (index = 0, quantity = sourceKeys.length; index < quantity; index += 1) {
+    key = sourceKeys[index];
+
+    if (!_hasOwnProperty.call(destination, key)) {
+      destination[key] = source[key];
+      overridableKeys[key] = true;
+    }
+  }
+}
+
+function storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, valueNode,
+  startLine, startLineStart, startPos) {
+
+  var index, quantity;
+
+  // The output is a plain object here, so keys can only be strings.
+  // We need to convert keyNode to a string, but doing so can hang the process
+  // (deeply nested arrays that explode exponentially using aliases).
+  if (Array.isArray(keyNode)) {
+    keyNode = Array.prototype.slice.call(keyNode);
+
+    for (index = 0, quantity = keyNode.length; index < quantity; index += 1) {
+      if (Array.isArray(keyNode[index])) {
+        throwError(state, 'nested arrays are not supported inside keys');
+      }
+
+      if (typeof keyNode === 'object' && _class(keyNode[index]) === '[object Object]') {
+        keyNode[index] = '[object Object]';
+      }
+    }
+  }
+
+  // Avoid code execution in load() via toString property
+  // (still use its own toString for arrays, timestamps,
+  // and whatever user schema extensions happen to have @@toStringTag)
+  if (typeof keyNode === 'object' && _class(keyNode) === '[object Object]') {
+    keyNode = '[object Object]';
+  }
+
+
+  keyNode = String(keyNode);
+
+  if (_result === null) {
+    _result = {};
+  }
+
+  if (keyTag === 'tag:yaml.org,2002:merge') {
+    if (Array.isArray(valueNode)) {
+      for (index = 0, quantity = valueNode.length; index < quantity; index += 1) {
+        mergeMappings(state, _result, valueNode[index], overridableKeys);
+      }
+    } else {
+      mergeMappings(state, _result, valueNode, overridableKeys);
+    }
+  } else {
+    if (!state.json &&
+        !_hasOwnProperty.call(overridableKeys, keyNode) &&
+        _hasOwnProperty.call(_result, keyNode)) {
+      state.line = startLine || state.line;
+      state.lineStart = startLineStart || state.lineStart;
+      state.position = startPos || state.position;
+      throwError(state, 'duplicated mapping key');
+    }
+
+    // used for this specific key only because Object.defineProperty is slow
+    if (keyNode === '__proto__') {
+      Object.defineProperty(_result, keyNode, {
+        configurable: true,
+        enumerable: true,
+        writable: true,
+        value: valueNode
+      });
+    } else {
+      _result[keyNode] = valueNode;
+    }
+    delete overridableKeys[keyNode];
+  }
+
+  return _result;
+}
+
+function readLineBreak(state) {
+  var ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch === 0x0A/* LF */) {
+    state.position++;
+  } else if (ch === 0x0D/* CR */) {
+    state.position++;
+    if (state.input.charCodeAt(state.position) === 0x0A/* LF */) {
+      state.position++;
+    }
+  } else {
+    throwError(state, 'a line break is expected');
+  }
+
+  state.line += 1;
+  state.lineStart = state.position;
+  state.firstTabInLine = -1;
+}
+
+function skipSeparationSpace(state, allowComments, checkIndent) {
+  var lineBreaks = 0,
+      ch = state.input.charCodeAt(state.position);
+
+  while (ch !== 0) {
+    while (is_WHITE_SPACE(ch)) {
+      if (ch === 0x09/* Tab */ && state.firstTabInLine === -1) {
+        state.firstTabInLine = state.position;
+      }
+      ch = state.input.charCodeAt(++state.position);
+    }
+
+    if (allowComments && ch === 0x23/* # */) {
+      do {
+        ch = state.input.charCodeAt(++state.position);
+      } while (ch !== 0x0A/* LF */ && ch !== 0x0D/* CR */ && ch !== 0);
+    }
+
+    if (is_EOL(ch)) {
+      readLineBreak(state);
+
+      ch = state.input.charCodeAt(state.position);
+      lineBreaks++;
+      state.lineIndent = 0;
+
+      while (ch === 0x20/* Space */) {
+        state.lineIndent++;
+        ch = state.input.charCodeAt(++state.position);
+      }
+    } else {
+      break;
+    }
+  }
+
+  if (checkIndent !== -1 && lineBreaks !== 0 && state.lineIndent < checkIndent) {
+    throwWarning(state, 'deficient indentation');
+  }
+
+  return lineBreaks;
+}
+
+function testDocumentSeparator(state) {
+  var _position = state.position,
+      ch;
+
+  ch = state.input.charCodeAt(_position);
+
+  // Condition state.position === state.lineStart is tested
+  // in parent on each call, for efficiency. No needs to test here again.
+  if ((ch === 0x2D/* - */ || ch === 0x2E/* . */) &&
+      ch === state.input.charCodeAt(_position + 1) &&
+      ch === state.input.charCodeAt(_position + 2)) {
+
+    _position += 3;
+
+    ch = state.input.charCodeAt(_position);
+
+    if (ch === 0 || is_WS_OR_EOL(ch)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function writeFoldedLines(state, count) {
+  if (count === 1) {
+    state.result += ' ';
+  } else if (count > 1) {
+    state.result += common.repeat('\n', count - 1);
+  }
+}
+
+
+function readPlainScalar(state, nodeIndent, withinFlowCollection) {
+  var preceding,
+      following,
+      captureStart,
+      captureEnd,
+      hasPendingContent,
+      _line,
+      _lineStart,
+      _lineIndent,
+      _kind = state.kind,
+      _result = state.result,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (is_WS_OR_EOL(ch)      ||
+      is_FLOW_INDICATOR(ch) ||
+      ch === 0x23/* # */    ||
+      ch === 0x26/* & */    ||
+      ch === 0x2A/* * */    ||
+      ch === 0x21/* ! */    ||
+      ch === 0x7C/* | */    ||
+      ch === 0x3E/* > */    ||
+      ch === 0x27/* ' */    ||
+      ch === 0x22/* " */    ||
+      ch === 0x25/* % */    ||
+      ch === 0x40/* @ */    ||
+      ch === 0x60/* ` */) {
+    return false;
+  }
+
+  if (ch === 0x3F/* ? */ || ch === 0x2D/* - */) {
+    following = state.input.charCodeAt(state.position + 1);
+
+    if (is_WS_OR_EOL(following) ||
+        withinFlowCollection && is_FLOW_INDICATOR(following)) {
+      return false;
+    }
+  }
+
+  state.kind = 'scalar';
+  state.result = '';
+  captureStart = captureEnd = state.position;
+  hasPendingContent = false;
+
+  while (ch !== 0) {
+    if (ch === 0x3A/* : */) {
+      following = state.input.charCodeAt(state.position + 1);
+
+      if (is_WS_OR_EOL(following) ||
+          withinFlowCollection && is_FLOW_INDICATOR(following)) {
+        break;
+      }
+
+    } else if (ch === 0x23/* # */) {
+      preceding = state.input.charCodeAt(state.position - 1);
+
+      if (is_WS_OR_EOL(preceding)) {
+        break;
+      }
+
+    } else if ((state.position === state.lineStart && testDocumentSeparator(state)) ||
+               withinFlowCollection && is_FLOW_INDICATOR(ch)) {
+      break;
+
+    } else if (is_EOL(ch)) {
+      _line = state.line;
+      _lineStart = state.lineStart;
+      _lineIndent = state.lineIndent;
+      skipSeparationSpace(state, false, -1);
+
+      if (state.lineIndent >= nodeIndent) {
+        hasPendingContent = true;
+        ch = state.input.charCodeAt(state.position);
+        continue;
+      } else {
+        state.position = captureEnd;
+        state.line = _line;
+        state.lineStart = _lineStart;
+        state.lineIndent = _lineIndent;
+        break;
+      }
+    }
+
+    if (hasPendingContent) {
+      captureSegment(state, captureStart, captureEnd, false);
+      writeFoldedLines(state, state.line - _line);
+      captureStart = captureEnd = state.position;
+      hasPendingContent = false;
+    }
+
+    if (!is_WHITE_SPACE(ch)) {
+      captureEnd = state.position + 1;
+    }
+
+    ch = state.input.charCodeAt(++state.position);
+  }
+
+  captureSegment(state, captureStart, captureEnd, false);
+
+  if (state.result) {
+    return true;
+  }
+
+  state.kind = _kind;
+  state.result = _result;
+  return false;
+}
+
+function readSingleQuotedScalar(state, nodeIndent) {
+  var ch,
+      captureStart, captureEnd;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch !== 0x27/* ' */) {
+    return false;
+  }
+
+  state.kind = 'scalar';
+  state.result = '';
+  state.position++;
+  captureStart = captureEnd = state.position;
+
+  while ((ch = state.input.charCodeAt(state.position)) !== 0) {
+    if (ch === 0x27/* ' */) {
+      captureSegment(state, captureStart, state.position, true);
+      ch = state.input.charCodeAt(++state.position);
+
+      if (ch === 0x27/* ' */) {
+        captureStart = state.position;
+        state.position++;
+        captureEnd = state.position;
+      } else {
+        return true;
+      }
+
+    } else if (is_EOL(ch)) {
+      captureSegment(state, captureStart, captureEnd, true);
+      writeFoldedLines(state, skipSeparationSpace(state, false, nodeIndent));
+      captureStart = captureEnd = state.position;
+
+    } else if (state.position === state.lineStart && testDocumentSeparator(state)) {
+      throwError(state, 'unexpected end of the document within a single quoted scalar');
+
+    } else {
+      state.position++;
+      captureEnd = state.position;
+    }
+  }
+
+  throwError(state, 'unexpected end of the stream within a single quoted scalar');
+}
+
+function readDoubleQuotedScalar(state, nodeIndent) {
+  var captureStart,
+      captureEnd,
+      hexLength,
+      hexResult,
+      tmp,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch !== 0x22/* " */) {
+    return false;
+  }
+
+  state.kind = 'scalar';
+  state.result = '';
+  state.position++;
+  captureStart = captureEnd = state.position;
+
+  while ((ch = state.input.charCodeAt(state.position)) !== 0) {
+    if (ch === 0x22/* " */) {
+      captureSegment(state, captureStart, state.position, true);
+      state.position++;
+      return true;
+
+    } else if (ch === 0x5C/* \ */) {
+      captureSegment(state, captureStart, state.position, true);
+      ch = state.input.charCodeAt(++state.position);
+
+      if (is_EOL(ch)) {
+        skipSeparationSpace(state, false, nodeIndent);
+
+        // TODO: rework to inline fn with no type cast?
+      } else if (ch < 256 && simpleEscapeCheck[ch]) {
+        state.result += simpleEscapeMap[ch];
+        state.position++;
+
+      } else if ((tmp = escapedHexLen(ch)) > 0) {
+        hexLength = tmp;
+        hexResult = 0;
+
+        for (; hexLength > 0; hexLength--) {
+          ch = state.input.charCodeAt(++state.position);
+
+          if ((tmp = fromHexCode(ch)) >= 0) {
+            hexResult = (hexResult << 4) + tmp;
+
+          } else {
+            throwError(state, 'expected hexadecimal character');
+          }
+        }
+
+        state.result += charFromCodepoint(hexResult);
+
+        state.position++;
+
+      } else {
+        throwError(state, 'unknown escape sequence');
+      }
+
+      captureStart = captureEnd = state.position;
+
+    } else if (is_EOL(ch)) {
+      captureSegment(state, captureStart, captureEnd, true);
+      writeFoldedLines(state, skipSeparationSpace(state, false, nodeIndent));
+      captureStart = captureEnd = state.position;
+
+    } else if (state.position === state.lineStart && testDocumentSeparator(state)) {
+      throwError(state, 'unexpected end of the document within a double quoted scalar');
+
+    } else {
+      state.position++;
+      captureEnd = state.position;
+    }
+  }
+
+  throwError(state, 'unexpected end of the stream within a double quoted scalar');
+}
+
+function readFlowCollection(state, nodeIndent) {
+  var readNext = true,
+      _line,
+      _lineStart,
+      _pos,
+      _tag     = state.tag,
+      _result,
+      _anchor  = state.anchor,
+      following,
+      terminator,
+      isPair,
+      isExplicitPair,
+      isMapping,
+      overridableKeys = Object.create(null),
+      keyNode,
+      keyTag,
+      valueNode,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch === 0x5B/* [ */) {
+    terminator = 0x5D;/* ] */
+    isMapping = false;
+    _result = [];
+  } else if (ch === 0x7B/* { */) {
+    terminator = 0x7D;/* } */
+    isMapping = true;
+    _result = {};
+  } else {
+    return false;
+  }
+
+  if (state.anchor !== null) {
+    state.anchorMap[state.anchor] = _result;
+  }
+
+  ch = state.input.charCodeAt(++state.position);
+
+  while (ch !== 0) {
+    skipSeparationSpace(state, true, nodeIndent);
+
+    ch = state.input.charCodeAt(state.position);
+
+    if (ch === terminator) {
+      state.position++;
+      state.tag = _tag;
+      state.anchor = _anchor;
+      state.kind = isMapping ? 'mapping' : 'sequence';
+      state.result = _result;
+      return true;
+    } else if (!readNext) {
+      throwError(state, 'missed comma between flow collection entries');
+    } else if (ch === 0x2C/* , */) {
+      // "flow collection entries can never be completely empty", as per YAML 1.2, section 7.4
+      throwError(state, "expected the node content, but found ','");
+    }
+
+    keyTag = keyNode = valueNode = null;
+    isPair = isExplicitPair = false;
+
+    if (ch === 0x3F/* ? */) {
+      following = state.input.charCodeAt(state.position + 1);
+
+      if (is_WS_OR_EOL(following)) {
+        isPair = isExplicitPair = true;
+        state.position++;
+        skipSeparationSpace(state, true, nodeIndent);
+      }
+    }
+
+    _line = state.line; // Save the current line.
+    _lineStart = state.lineStart;
+    _pos = state.position;
+    composeNode(state, nodeIndent, CONTEXT_FLOW_IN, false, true);
+    keyTag = state.tag;
+    keyNode = state.result;
+    skipSeparationSpace(state, true, nodeIndent);
+
+    ch = state.input.charCodeAt(state.position);
+
+    if ((isExplicitPair || state.line === _line) && ch === 0x3A/* : */) {
+      isPair = true;
+      ch = state.input.charCodeAt(++state.position);
+      skipSeparationSpace(state, true, nodeIndent);
+      composeNode(state, nodeIndent, CONTEXT_FLOW_IN, false, true);
+      valueNode = state.result;
+    }
+
+    if (isMapping) {
+      storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, valueNode, _line, _lineStart, _pos);
+    } else if (isPair) {
+      _result.push(storeMappingPair(state, null, overridableKeys, keyTag, keyNode, valueNode, _line, _lineStart, _pos));
+    } else {
+      _result.push(keyNode);
+    }
+
+    skipSeparationSpace(state, true, nodeIndent);
+
+    ch = state.input.charCodeAt(state.position);
+
+    if (ch === 0x2C/* , */) {
+      readNext = true;
+      ch = state.input.charCodeAt(++state.position);
+    } else {
+      readNext = false;
+    }
+  }
+
+  throwError(state, 'unexpected end of the stream within a flow collection');
+}
+
+function readBlockScalar(state, nodeIndent) {
+  var captureStart,
+      folding,
+      chomping       = CHOMPING_CLIP,
+      didReadContent = false,
+      detectedIndent = false,
+      textIndent     = nodeIndent,
+      emptyLines     = 0,
+      atMoreIndented = false,
+      tmp,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch === 0x7C/* | */) {
+    folding = false;
+  } else if (ch === 0x3E/* > */) {
+    folding = true;
+  } else {
+    return false;
+  }
+
+  state.kind = 'scalar';
+  state.result = '';
+
+  while (ch !== 0) {
+    ch = state.input.charCodeAt(++state.position);
+
+    if (ch === 0x2B/* + */ || ch === 0x2D/* - */) {
+      if (CHOMPING_CLIP === chomping) {
+        chomping = (ch === 0x2B/* + */) ? CHOMPING_KEEP : CHOMPING_STRIP;
+      } else {
+        throwError(state, 'repeat of a chomping mode identifier');
+      }
+
+    } else if ((tmp = fromDecimalCode(ch)) >= 0) {
+      if (tmp === 0) {
+        throwError(state, 'bad explicit indentation width of a block scalar; it cannot be less than one');
+      } else if (!detectedIndent) {
+        textIndent = nodeIndent + tmp - 1;
+        detectedIndent = true;
+      } else {
+        throwError(state, 'repeat of an indentation width identifier');
+      }
+
+    } else {
+      break;
+    }
+  }
+
+  if (is_WHITE_SPACE(ch)) {
+    do { ch = state.input.charCodeAt(++state.position); }
+    while (is_WHITE_SPACE(ch));
+
+    if (ch === 0x23/* # */) {
+      do { ch = state.input.charCodeAt(++state.position); }
+      while (!is_EOL(ch) && (ch !== 0));
+    }
+  }
+
+  while (ch !== 0) {
+    readLineBreak(state);
+    state.lineIndent = 0;
+
+    ch = state.input.charCodeAt(state.position);
+
+    while ((!detectedIndent || state.lineIndent < textIndent) &&
+           (ch === 0x20/* Space */)) {
+      state.lineIndent++;
+      ch = state.input.charCodeAt(++state.position);
+    }
+
+    if (!detectedIndent && state.lineIndent > textIndent) {
+      textIndent = state.lineIndent;
+    }
+
+    if (is_EOL(ch)) {
+      emptyLines++;
+      continue;
+    }
+
+    // End of the scalar.
+    if (state.lineIndent < textIndent) {
+
+      // Perform the chomping.
+      if (chomping === CHOMPING_KEEP) {
+        state.result += common.repeat('\n', didReadContent ? 1 + emptyLines : emptyLines);
+      } else if (chomping === CHOMPING_CLIP) {
+        if (didReadContent) { // i.e. only if the scalar is not empty.
+          state.result += '\n';
+        }
+      }
+
+      // Break this `while` cycle and go to the funciton's epilogue.
+      break;
+    }
+
+    // Folded style: use fancy rules to handle line breaks.
+    if (folding) {
+
+      // Lines starting with white space characters (more-indented lines) are not folded.
+      if (is_WHITE_SPACE(ch)) {
+        atMoreIndented = true;
+        // except for the first content line (cf. Example 8.1)
+        state.result += common.repeat('\n', didReadContent ? 1 + emptyLines : emptyLines);
+
+      // End of more-indented block.
+      } else if (atMoreIndented) {
+        atMoreIndented = false;
+        state.result += common.repeat('\n', emptyLines + 1);
+
+      // Just one line break - perceive as the same line.
+      } else if (emptyLines === 0) {
+        if (didReadContent) { // i.e. only if we have already read some scalar content.
+          state.result += ' ';
+        }
+
+      // Several line breaks - perceive as different lines.
+      } else {
+        state.result += common.repeat('\n', emptyLines);
+      }
+
+    // Literal style: just add exact number of line breaks between content lines.
+    } else {
+      // Keep all line breaks except the header line break.
+      state.result += common.repeat('\n', didReadContent ? 1 + emptyLines : emptyLines);
+    }
+
+    didReadContent = true;
+    detectedIndent = true;
+    emptyLines = 0;
+    captureStart = state.position;
+
+    while (!is_EOL(ch) && (ch !== 0)) {
+      ch = state.input.charCodeAt(++state.position);
+    }
+
+    captureSegment(state, captureStart, state.position, false);
+  }
+
+  return true;
+}
+
+function readBlockSequence(state, nodeIndent) {
+  var _line,
+      _tag      = state.tag,
+      _anchor   = state.anchor,
+      _result   = [],
+      following,
+      detected  = false,
+      ch;
+
+  // there is a leading tab before this token, so it can't be a block sequence/mapping;
+  // it can still be flow sequence/mapping or a scalar
+  if (state.firstTabInLine !== -1) return false;
+
+  if (state.anchor !== null) {
+    state.anchorMap[state.anchor] = _result;
+  }
+
+  ch = state.input.charCodeAt(state.position);
+
+  while (ch !== 0) {
+    if (state.firstTabInLine !== -1) {
+      state.position = state.firstTabInLine;
+      throwError(state, 'tab characters must not be used in indentation');
+    }
+
+    if (ch !== 0x2D/* - */) {
+      break;
+    }
+
+    following = state.input.charCodeAt(state.position + 1);
+
+    if (!is_WS_OR_EOL(following)) {
+      break;
+    }
+
+    detected = true;
+    state.position++;
+
+    if (skipSeparationSpace(state, true, -1)) {
+      if (state.lineIndent <= nodeIndent) {
+        _result.push(null);
+        ch = state.input.charCodeAt(state.position);
+        continue;
+      }
+    }
+
+    _line = state.line;
+    composeNode(state, nodeIndent, CONTEXT_BLOCK_IN, false, true);
+    _result.push(state.result);
+    skipSeparationSpace(state, true, -1);
+
+    ch = state.input.charCodeAt(state.position);
+
+    if ((state.line === _line || state.lineIndent > nodeIndent) && (ch !== 0)) {
+      throwError(state, 'bad indentation of a sequence entry');
+    } else if (state.lineIndent < nodeIndent) {
+      break;
+    }
+  }
+
+  if (detected) {
+    state.tag = _tag;
+    state.anchor = _anchor;
+    state.kind = 'sequence';
+    state.result = _result;
+    return true;
+  }
+  return false;
+}
+
+function readBlockMapping(state, nodeIndent, flowIndent) {
+  var following,
+      allowCompact,
+      _line,
+      _keyLine,
+      _keyLineStart,
+      _keyPos,
+      _tag          = state.tag,
+      _anchor       = state.anchor,
+      _result       = {},
+      overridableKeys = Object.create(null),
+      keyTag        = null,
+      keyNode       = null,
+      valueNode     = null,
+      atExplicitKey = false,
+      detected      = false,
+      ch;
+
+  // there is a leading tab before this token, so it can't be a block sequence/mapping;
+  // it can still be flow sequence/mapping or a scalar
+  if (state.firstTabInLine !== -1) return false;
+
+  if (state.anchor !== null) {
+    state.anchorMap[state.anchor] = _result;
+  }
+
+  ch = state.input.charCodeAt(state.position);
+
+  while (ch !== 0) {
+    if (!atExplicitKey && state.firstTabInLine !== -1) {
+      state.position = state.firstTabInLine;
+      throwError(state, 'tab characters must not be used in indentation');
+    }
+
+    following = state.input.charCodeAt(state.position + 1);
+    _line = state.line; // Save the current line.
+
+    //
+    // Explicit notation case. There are two separate blocks:
+    // first for the key (denoted by "?") and second for the value (denoted by ":")
+    //
+    if ((ch === 0x3F/* ? */ || ch === 0x3A/* : */) && is_WS_OR_EOL(following)) {
+
+      if (ch === 0x3F/* ? */) {
+        if (atExplicitKey) {
+          storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, null, _keyLine, _keyLineStart, _keyPos);
+          keyTag = keyNode = valueNode = null;
+        }
+
+        detected = true;
+        atExplicitKey = true;
+        allowCompact = true;
+
+      } else if (atExplicitKey) {
+        // i.e. 0x3A/* : */ === character after the explicit key.
+        atExplicitKey = false;
+        allowCompact = true;
+
+      } else {
+        throwError(state, 'incomplete explicit mapping pair; a key node is missed; or followed by a non-tabulated empty line');
+      }
+
+      state.position += 1;
+      ch = following;
+
+    //
+    // Implicit notation case. Flow-style node as the key first, then ":", and the value.
+    //
+    } else {
+      _keyLine = state.line;
+      _keyLineStart = state.lineStart;
+      _keyPos = state.position;
+
+      if (!composeNode(state, flowIndent, CONTEXT_FLOW_OUT, false, true)) {
+        // Neither implicit nor explicit notation.
+        // Reading is done. Go to the epilogue.
+        break;
+      }
+
+      if (state.line === _line) {
+        ch = state.input.charCodeAt(state.position);
+
+        while (is_WHITE_SPACE(ch)) {
+          ch = state.input.charCodeAt(++state.position);
+        }
+
+        if (ch === 0x3A/* : */) {
+          ch = state.input.charCodeAt(++state.position);
+
+          if (!is_WS_OR_EOL(ch)) {
+            throwError(state, 'a whitespace character is expected after the key-value separator within a block mapping');
+          }
+
+          if (atExplicitKey) {
+            storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, null, _keyLine, _keyLineStart, _keyPos);
+            keyTag = keyNode = valueNode = null;
+          }
+
+          detected = true;
+          atExplicitKey = false;
+          allowCompact = false;
+          keyTag = state.tag;
+          keyNode = state.result;
+
+        } else if (detected) {
+          throwError(state, 'can not read an implicit mapping pair; a colon is missed');
+
+        } else {
+          state.tag = _tag;
+          state.anchor = _anchor;
+          return true; // Keep the result of `composeNode`.
+        }
+
+      } else if (detected) {
+        throwError(state, 'can not read a block mapping entry; a multiline key may not be an implicit key');
+
+      } else {
+        state.tag = _tag;
+        state.anchor = _anchor;
+        return true; // Keep the result of `composeNode`.
+      }
+    }
+
+    //
+    // Common reading code for both explicit and implicit notations.
+    //
+    if (state.line === _line || state.lineIndent > nodeIndent) {
+      if (atExplicitKey) {
+        _keyLine = state.line;
+        _keyLineStart = state.lineStart;
+        _keyPos = state.position;
+      }
+
+      if (composeNode(state, nodeIndent, CONTEXT_BLOCK_OUT, true, allowCompact)) {
+        if (atExplicitKey) {
+          keyNode = state.result;
+        } else {
+          valueNode = state.result;
+        }
+      }
+
+      if (!atExplicitKey) {
+        storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, valueNode, _keyLine, _keyLineStart, _keyPos);
+        keyTag = keyNode = valueNode = null;
+      }
+
+      skipSeparationSpace(state, true, -1);
+      ch = state.input.charCodeAt(state.position);
+    }
+
+    if ((state.line === _line || state.lineIndent > nodeIndent) && (ch !== 0)) {
+      throwError(state, 'bad indentation of a mapping entry');
+    } else if (state.lineIndent < nodeIndent) {
+      break;
+    }
+  }
+
+  //
+  // Epilogue.
+  //
+
+  // Special case: last mapping's node contains only the key in explicit notation.
+  if (atExplicitKey) {
+    storeMappingPair(state, _result, overridableKeys, keyTag, keyNode, null, _keyLine, _keyLineStart, _keyPos);
+  }
+
+  // Expose the resulting mapping.
+  if (detected) {
+    state.tag = _tag;
+    state.anchor = _anchor;
+    state.kind = 'mapping';
+    state.result = _result;
+  }
+
+  return detected;
+}
+
+function readTagProperty(state) {
+  var _position,
+      isVerbatim = false,
+      isNamed    = false,
+      tagHandle,
+      tagName,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch !== 0x21/* ! */) return false;
+
+  if (state.tag !== null) {
+    throwError(state, 'duplication of a tag property');
+  }
+
+  ch = state.input.charCodeAt(++state.position);
+
+  if (ch === 0x3C/* < */) {
+    isVerbatim = true;
+    ch = state.input.charCodeAt(++state.position);
+
+  } else if (ch === 0x21/* ! */) {
+    isNamed = true;
+    tagHandle = '!!';
+    ch = state.input.charCodeAt(++state.position);
+
+  } else {
+    tagHandle = '!';
+  }
+
+  _position = state.position;
+
+  if (isVerbatim) {
+    do { ch = state.input.charCodeAt(++state.position); }
+    while (ch !== 0 && ch !== 0x3E/* > */);
+
+    if (state.position < state.length) {
+      tagName = state.input.slice(_position, state.position);
+      ch = state.input.charCodeAt(++state.position);
+    } else {
+      throwError(state, 'unexpected end of the stream within a verbatim tag');
+    }
+  } else {
+    while (ch !== 0 && !is_WS_OR_EOL(ch)) {
+
+      if (ch === 0x21/* ! */) {
+        if (!isNamed) {
+          tagHandle = state.input.slice(_position - 1, state.position + 1);
+
+          if (!PATTERN_TAG_HANDLE.test(tagHandle)) {
+            throwError(state, 'named tag handle cannot contain such characters');
+          }
+
+          isNamed = true;
+          _position = state.position + 1;
+        } else {
+          throwError(state, 'tag suffix cannot contain exclamation marks');
+        }
+      }
+
+      ch = state.input.charCodeAt(++state.position);
+    }
+
+    tagName = state.input.slice(_position, state.position);
+
+    if (PATTERN_FLOW_INDICATORS.test(tagName)) {
+      throwError(state, 'tag suffix cannot contain flow indicator characters');
+    }
+  }
+
+  if (tagName && !PATTERN_TAG_URI.test(tagName)) {
+    throwError(state, 'tag name cannot contain such characters: ' + tagName);
+  }
+
+  try {
+    tagName = decodeURIComponent(tagName);
+  } catch (err) {
+    throwError(state, 'tag name is malformed: ' + tagName);
+  }
+
+  if (isVerbatim) {
+    state.tag = tagName;
+
+  } else if (_hasOwnProperty.call(state.tagMap, tagHandle)) {
+    state.tag = state.tagMap[tagHandle] + tagName;
+
+  } else if (tagHandle === '!') {
+    state.tag = '!' + tagName;
+
+  } else if (tagHandle === '!!') {
+    state.tag = 'tag:yaml.org,2002:' + tagName;
+
+  } else {
+    throwError(state, 'undeclared tag handle "' + tagHandle + '"');
+  }
+
+  return true;
+}
+
+function readAnchorProperty(state) {
+  var _position,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch !== 0x26/* & */) return false;
+
+  if (state.anchor !== null) {
+    throwError(state, 'duplication of an anchor property');
+  }
+
+  ch = state.input.charCodeAt(++state.position);
+  _position = state.position;
+
+  while (ch !== 0 && !is_WS_OR_EOL(ch) && !is_FLOW_INDICATOR(ch)) {
+    ch = state.input.charCodeAt(++state.position);
+  }
+
+  if (state.position === _position) {
+    throwError(state, 'name of an anchor node must contain at least one character');
+  }
+
+  state.anchor = state.input.slice(_position, state.position);
+  return true;
+}
+
+function readAlias(state) {
+  var _position, alias,
+      ch;
+
+  ch = state.input.charCodeAt(state.position);
+
+  if (ch !== 0x2A/* * */) return false;
+
+  ch = state.input.charCodeAt(++state.position);
+  _position = state.position;
+
+  while (ch !== 0 && !is_WS_OR_EOL(ch) && !is_FLOW_INDICATOR(ch)) {
+    ch = state.input.charCodeAt(++state.position);
+  }
+
+  if (state.position === _position) {
+    throwError(state, 'name of an alias node must contain at least one character');
+  }
+
+  alias = state.input.slice(_position, state.position);
+
+  if (!_hasOwnProperty.call(state.anchorMap, alias)) {
+    throwError(state, 'unidentified alias "' + alias + '"');
+  }
+
+  state.result = state.anchorMap[alias];
+  skipSeparationSpace(state, true, -1);
+  return true;
+}
+
+function composeNode(state, parentIndent, nodeContext, allowToSeek, allowCompact) {
+  var allowBlockStyles,
+      allowBlockScalars,
+      allowBlockCollections,
+      indentStatus = 1, // 1: this>parent, 0: this=parent, -1: this<parent
+      atNewLine  = false,
+      hasContent = false,
+      typeIndex,
+      typeQuantity,
+      typeList,
+      type,
+      flowIndent,
+      blockIndent;
+
+  if (state.listener !== null) {
+    state.listener('open', state);
+  }
+
+  state.tag    = null;
+  state.anchor = null;
+  state.kind   = null;
+  state.result = null;
+
+  allowBlockStyles = allowBlockScalars = allowBlockCollections =
+    CONTEXT_BLOCK_OUT === nodeContext ||
+    CONTEXT_BLOCK_IN  === nodeContext;
+
+  if (allowToSeek) {
+    if (skipSeparationSpace(state, true, -1)) {
+      atNewLine = true;
+
+      if (state.lineIndent > parentIndent) {
+        indentStatus = 1;
+      } else if (state.lineIndent === parentIndent) {
+        indentStatus = 0;
+      } else if (state.lineIndent < parentIndent) {
+        indentStatus = -1;
+      }
+    }
+  }
+
+  if (indentStatus === 1) {
+    while (readTagProperty(state) || readAnchorProperty(state)) {
+      if (skipSeparationSpace(state, true, -1)) {
+        atNewLine = true;
+        allowBlockCollections = allowBlockStyles;
+
+        if (state.lineIndent > parentIndent) {
+          indentStatus = 1;
+        } else if (state.lineIndent === parentIndent) {
+          indentStatus = 0;
+        } else if (state.lineIndent < parentIndent) {
+          indentStatus = -1;
+        }
+      } else {
+        allowBlockCollections = false;
+      }
+    }
+  }
+
+  if (allowBlockCollections) {
+    allowBlockCollections = atNewLine || allowCompact;
+  }
+
+  if (indentStatus === 1 || CONTEXT_BLOCK_OUT === nodeContext) {
+    if (CONTEXT_FLOW_IN === nodeContext || CONTEXT_FLOW_OUT === nodeContext) {
+      flowIndent = parentIndent;
+    } else {
+      flowIndent = parentIndent + 1;
+    }
+
+    blockIndent = state.position - state.lineStart;
+
+    if (indentStatus === 1) {
+      if (allowBlockCollections &&
+          (readBlockSequence(state, blockIndent) ||
+           readBlockMapping(state, blockIndent, flowIndent)) ||
+          readFlowCollection(state, flowIndent)) {
+        hasContent = true;
+      } else {
+        if ((allowBlockScalars && readBlockScalar(state, flowIndent)) ||
+            readSingleQuotedScalar(state, flowIndent) ||
+            readDoubleQuotedScalar(state, flowIndent)) {
+          hasContent = true;
+
+        } else if (readAlias(state)) {
+          hasContent = true;
+
+          if (state.tag !== null || state.anchor !== null) {
+            throwError(state, 'alias node should not have any properties');
+          }
+
+        } else if (readPlainScalar(state, flowIndent, CONTEXT_FLOW_IN === nodeContext)) {
+          hasContent = true;
+
+          if (state.tag === null) {
+            state.tag = '?';
+          }
+        }
+
+        if (state.anchor !== null) {
+          state.anchorMap[state.anchor] = state.result;
+        }
+      }
+    } else if (indentStatus === 0) {
+      // Special case: block sequences are allowed to have same indentation level as the parent.
+      // http://www.yaml.org/spec/1.2/spec.html#id2799784
+      hasContent = allowBlockCollections && readBlockSequence(state, blockIndent);
+    }
+  }
+
+  if (state.tag === null) {
+    if (state.anchor !== null) {
+      state.anchorMap[state.anchor] = state.result;
+    }
+
+  } else if (state.tag === '?') {
+    // Implicit resolving is not allowed for non-scalar types, and '?'
+    // non-specific tag is only automatically assigned to plain scalars.
+    //
+    // We only need to check kind conformity in case user explicitly assigns '?'
+    // tag, for example like this: "!<?> [0]"
+    //
+    if (state.result !== null && state.kind !== 'scalar') {
+      throwError(state, 'unacceptable node kind for !<?> tag; it should be "scalar", not "' + state.kind + '"');
+    }
+
+    for (typeIndex = 0, typeQuantity = state.implicitTypes.length; typeIndex < typeQuantity; typeIndex += 1) {
+      type = state.implicitTypes[typeIndex];
+
+      if (type.resolve(state.result)) { // `state.result` updated in resolver if matched
+        state.result = type.construct(state.result);
+        state.tag = type.tag;
+        if (state.anchor !== null) {
+          state.anchorMap[state.anchor] = state.result;
+        }
+        break;
+      }
+    }
+  } else if (state.tag !== '!') {
+    if (_hasOwnProperty.call(state.typeMap[state.kind || 'fallback'], state.tag)) {
+      type = state.typeMap[state.kind || 'fallback'][state.tag];
+    } else {
+      // looking for multi type
+      type = null;
+      typeList = state.typeMap.multi[state.kind || 'fallback'];
+
+      for (typeIndex = 0, typeQuantity = typeList.length; typeIndex < typeQuantity; typeIndex += 1) {
+        if (state.tag.slice(0, typeList[typeIndex].tag.length) === typeList[typeIndex].tag) {
+          type = typeList[typeIndex];
+          break;
+        }
+      }
+    }
+
+    if (!type) {
+      throwError(state, 'unknown tag !<' + state.tag + '>');
+    }
+
+    if (state.result !== null && type.kind !== state.kind) {
+      throwError(state, 'unacceptable node kind for !<' + state.tag + '> tag; it should be "' + type.kind + '", not "' + state.kind + '"');
+    }
+
+    if (!type.resolve(state.result, state.tag)) { // `state.result` updated in resolver if matched
+      throwError(state, 'cannot resolve a node with !<' + state.tag + '> explicit tag');
+    } else {
+      state.result = type.construct(state.result, state.tag);
+      if (state.anchor !== null) {
+        state.anchorMap[state.anchor] = state.result;
+      }
+    }
+  }
+
+  if (state.listener !== null) {
+    state.listener('close', state);
+  }
+  return state.tag !== null ||  state.anchor !== null || hasContent;
+}
+
+function readDocument(state) {
+  var documentStart = state.position,
+      _position,
+      directiveName,
+      directiveArgs,
+      hasDirectives = false,
+      ch;
+
+  state.version = null;
+  state.checkLineBreaks = state.legacy;
+  state.tagMap = Object.create(null);
+  state.anchorMap = Object.create(null);
+
+  while ((ch = state.input.charCodeAt(state.position)) !== 0) {
+    skipSeparationSpace(state, true, -1);
+
+    ch = state.input.charCodeAt(state.position);
+
+    if (state.lineIndent > 0 || ch !== 0x25/* % */) {
+      break;
+    }
+
+    hasDirectives = true;
+    ch = state.input.charCodeAt(++state.position);
+    _position = state.position;
+
+    while (ch !== 0 && !is_WS_OR_EOL(ch)) {
+      ch = state.input.charCodeAt(++state.position);
+    }
+
+    directiveName = state.input.slice(_position, state.position);
+    directiveArgs = [];
+
+    if (directiveName.length < 1) {
+      throwError(state, 'directive name must not be less than one character in length');
+    }
+
+    while (ch !== 0) {
+      while (is_WHITE_SPACE(ch)) {
+        ch = state.input.charCodeAt(++state.position);
+      }
+
+      if (ch === 0x23/* # */) {
+        do { ch = state.input.charCodeAt(++state.position); }
+        while (ch !== 0 && !is_EOL(ch));
+        break;
+      }
+
+      if (is_EOL(ch)) break;
+
+      _position = state.position;
+
+      while (ch !== 0 && !is_WS_OR_EOL(ch)) {
+        ch = state.input.charCodeAt(++state.position);
+      }
+
+      directiveArgs.push(state.input.slice(_position, state.position));
+    }
+
+    if (ch !== 0) readLineBreak(state);
+
+    if (_hasOwnProperty.call(directiveHandlers, directiveName)) {
+      directiveHandlers[directiveName](state, directiveName, directiveArgs);
+    } else {
+      throwWarning(state, 'unknown document directive "' + directiveName + '"');
+    }
+  }
+
+  skipSeparationSpace(state, true, -1);
+
+  if (state.lineIndent === 0 &&
+      state.input.charCodeAt(state.position)     === 0x2D/* - */ &&
+      state.input.charCodeAt(state.position + 1) === 0x2D/* - */ &&
+      state.input.charCodeAt(state.position + 2) === 0x2D/* - */) {
+    state.position += 3;
+    skipSeparationSpace(state, true, -1);
+
+  } else if (hasDirectives) {
+    throwError(state, 'directives end mark is expected');
+  }
+
+  composeNode(state, state.lineIndent - 1, CONTEXT_BLOCK_OUT, false, true);
+  skipSeparationSpace(state, true, -1);
+
+  if (state.checkLineBreaks &&
+      PATTERN_NON_ASCII_LINE_BREAKS.test(state.input.slice(documentStart, state.position))) {
+    throwWarning(state, 'non-ASCII line breaks are interpreted as content');
+  }
+
+  state.documents.push(state.result);
+
+  if (state.position === state.lineStart && testDocumentSeparator(state)) {
+
+    if (state.input.charCodeAt(state.position) === 0x2E/* . */) {
+      state.position += 3;
+      skipSeparationSpace(state, true, -1);
+    }
+    return;
+  }
+
+  if (state.position < (state.length - 1)) {
+    throwError(state, 'end of the stream or a document separator is expected');
+  } else {
+    return;
+  }
+}
+
+
+function loadDocuments(input, options) {
+  input = String(input);
+  options = options || {};
+
+  if (input.length !== 0) {
+
+    // Add tailing `\n` if not exists
+    if (input.charCodeAt(input.length - 1) !== 0x0A/* LF */ &&
+        input.charCodeAt(input.length - 1) !== 0x0D/* CR */) {
+      input += '\n';
+    }
+
+    // Strip BOM
+    if (input.charCodeAt(0) === 0xFEFF) {
+      input = input.slice(1);
+    }
+  }
+
+  var state = new State(input, options);
+
+  var nullpos = input.indexOf('\0');
+
+  if (nullpos !== -1) {
+    state.position = nullpos;
+    throwError(state, 'null byte is not allowed in input');
+  }
+
+  // Use 0 as string terminator. That significantly simplifies bounds check.
+  state.input += '\0';
+
+  while (state.input.charCodeAt(state.position) === 0x20/* Space */) {
+    state.lineIndent += 1;
+    state.position += 1;
+  }
+
+  while (state.position < (state.length - 1)) {
+    readDocument(state);
+  }
+
+  return state.documents;
+}
+
+
+function loadAll(input, iterator, options) {
+  if (iterator !== null && typeof iterator === 'object' && typeof options === 'undefined') {
+    options = iterator;
+    iterator = null;
+  }
+
+  var documents = loadDocuments(input, options);
+
+  if (typeof iterator !== 'function') {
+    return documents;
+  }
+
+  for (var index = 0, length = documents.length; index < length; index += 1) {
+    iterator(documents[index]);
+  }
+}
+
+
+function load(input, options) {
+  var documents = loadDocuments(input, options);
+
+  if (documents.length === 0) {
+    /*eslint-disable no-undefined*/
+    return undefined;
+  } else if (documents.length === 1) {
+    return documents[0];
+  }
+  throw new YAMLException('expected a single document in the stream, but found more');
+}
+
+
+module.exports.loadAll = loadAll;
+module.exports.load    = load;
+
+
+/***/ }),
+
+/***/ 1082:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+/*eslint-disable max-len*/
+
+var YAMLException = __nccwpck_require__(8179);
+var Type          = __nccwpck_require__(6073);
+
+
+function compileList(schema, name) {
+  var result = [];
+
+  schema[name].forEach(function (currentType) {
+    var newIndex = result.length;
+
+    result.forEach(function (previousType, previousIndex) {
+      if (previousType.tag === currentType.tag &&
+          previousType.kind === currentType.kind &&
+          previousType.multi === currentType.multi) {
+
+        newIndex = previousIndex;
+      }
+    });
+
+    result[newIndex] = currentType;
+  });
+
+  return result;
+}
+
+
+function compileMap(/* lists... */) {
+  var result = {
+        scalar: {},
+        sequence: {},
+        mapping: {},
+        fallback: {},
+        multi: {
+          scalar: [],
+          sequence: [],
+          mapping: [],
+          fallback: []
+        }
+      }, index, length;
+
+  function collectType(type) {
+    if (type.multi) {
+      result.multi[type.kind].push(type);
+      result.multi['fallback'].push(type);
+    } else {
+      result[type.kind][type.tag] = result['fallback'][type.tag] = type;
+    }
+  }
+
+  for (index = 0, length = arguments.length; index < length; index += 1) {
+    arguments[index].forEach(collectType);
+  }
+  return result;
+}
+
+
+function Schema(definition) {
+  return this.extend(definition);
+}
+
+
+Schema.prototype.extend = function extend(definition) {
+  var implicit = [];
+  var explicit = [];
+
+  if (definition instanceof Type) {
+    // Schema.extend(type)
+    explicit.push(definition);
+
+  } else if (Array.isArray(definition)) {
+    // Schema.extend([ type1, type2, ... ])
+    explicit = explicit.concat(definition);
+
+  } else if (definition && (Array.isArray(definition.implicit) || Array.isArray(definition.explicit))) {
+    // Schema.extend({ explicit: [ type1, type2, ... ], implicit: [ type1, type2, ... ] })
+    if (definition.implicit) implicit = implicit.concat(definition.implicit);
+    if (definition.explicit) explicit = explicit.concat(definition.explicit);
+
+  } else {
+    throw new YAMLException('Schema.extend argument should be a Type, [ Type ], ' +
+      'or a schema definition ({ implicit: [...], explicit: [...] })');
+  }
+
+  implicit.forEach(function (type) {
+    if (!(type instanceof Type)) {
+      throw new YAMLException('Specified list of YAML types (or a single Type object) contains a non-Type object.');
+    }
+
+    if (type.loadKind && type.loadKind !== 'scalar') {
+      throw new YAMLException('There is a non-scalar type in the implicit list of a schema. Implicit resolving of such types is not supported.');
+    }
+
+    if (type.multi) {
+      throw new YAMLException('There is a multi type in the implicit list of a schema. Multi tags can only be listed as explicit.');
+    }
+  });
+
+  explicit.forEach(function (type) {
+    if (!(type instanceof Type)) {
+      throw new YAMLException('Specified list of YAML types (or a single Type object) contains a non-Type object.');
+    }
+  });
+
+  var result = Object.create(Schema.prototype);
+
+  result.implicit = (this.implicit || []).concat(implicit);
+  result.explicit = (this.explicit || []).concat(explicit);
+
+  result.compiledImplicit = compileList(result, 'implicit');
+  result.compiledExplicit = compileList(result, 'explicit');
+  result.compiledTypeMap  = compileMap(result.compiledImplicit, result.compiledExplicit);
+
+  return result;
+};
+
+
+module.exports = Schema;
+
+
+/***/ }),
+
+/***/ 2011:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// Standard YAML's Core schema.
+// http://www.yaml.org/spec/1.2/spec.html#id2804923
+//
+// NOTE: JS-YAML does not support schema-specific tag resolution restrictions.
+// So, Core schema has no distinctions from JSON schema is JS-YAML.
+
+
+
+
+
+module.exports = __nccwpck_require__(1035);
+
+
+/***/ }),
+
+/***/ 8759:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// JS-YAML's default schema for `safeLoad` function.
+// It is not described in the YAML specification.
+//
+// This schema is based on standard YAML's Core schema and includes most of
+// extra types described at YAML tag repository. (http://yaml.org/type/)
+
+
+
+
+
+module.exports = (__nccwpck_require__(2011).extend)({
+  implicit: [
+    __nccwpck_require__(9212),
+    __nccwpck_require__(6104)
+  ],
+  explicit: [
+    __nccwpck_require__(7900),
+    __nccwpck_require__(9046),
+    __nccwpck_require__(6860),
+    __nccwpck_require__(9548)
+  ]
+});
+
+
+/***/ }),
+
+/***/ 8562:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// Standard YAML's Failsafe schema.
+// http://www.yaml.org/spec/1.2/spec.html#id2802346
+
+
+
+
+
+var Schema = __nccwpck_require__(1082);
+
+
+module.exports = new Schema({
+  explicit: [
+    __nccwpck_require__(3619),
+    __nccwpck_require__(7283),
+    __nccwpck_require__(6150)
+  ]
+});
+
+
+/***/ }),
+
+/***/ 1035:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+// Standard YAML's JSON schema.
+// http://www.yaml.org/spec/1.2/spec.html#id2803231
+//
+// NOTE: JS-YAML does not support schema-specific tag resolution restrictions.
+// So, this schema is not such strict as defined in the YAML specification.
+// It allows numbers in binary notaion, use `Null` and `NULL` as `null`, etc.
+
+
+
+
+
+module.exports = (__nccwpck_require__(8562).extend)({
+  implicit: [
+    __nccwpck_require__(721),
+    __nccwpck_require__(4993),
+    __nccwpck_require__(1615),
+    __nccwpck_require__(2705)
+  ]
+});
+
+
+/***/ }),
+
+/***/ 6975:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+
+var common = __nccwpck_require__(6829);
+
+
+// get snippet for a single line, respecting maxLength
+function getLine(buffer, lineStart, lineEnd, position, maxLineLength) {
+  var head = '';
+  var tail = '';
+  var maxHalfLength = Math.floor(maxLineLength / 2) - 1;
+
+  if (position - lineStart > maxHalfLength) {
+    head = ' ... ';
+    lineStart = position - maxHalfLength + head.length;
+  }
+
+  if (lineEnd - position > maxHalfLength) {
+    tail = ' ...';
+    lineEnd = position + maxHalfLength - tail.length;
+  }
+
+  return {
+    str: head + buffer.slice(lineStart, lineEnd).replace(/\t/g, '→') + tail,
+    pos: position - lineStart + head.length // relative position
+  };
+}
+
+
+function padStart(string, max) {
+  return common.repeat(' ', max - string.length) + string;
+}
+
+
+function makeSnippet(mark, options) {
+  options = Object.create(options || null);
+
+  if (!mark.buffer) return null;
+
+  if (!options.maxLength) options.maxLength = 79;
+  if (typeof options.indent      !== 'number') options.indent      = 1;
+  if (typeof options.linesBefore !== 'number') options.linesBefore = 3;
+  if (typeof options.linesAfter  !== 'number') options.linesAfter  = 2;
+
+  var re = /\r?\n|\r|\0/g;
+  var lineStarts = [ 0 ];
+  var lineEnds = [];
+  var match;
+  var foundLineNo = -1;
+
+  while ((match = re.exec(mark.buffer))) {
+    lineEnds.push(match.index);
+    lineStarts.push(match.index + match[0].length);
+
+    if (mark.position <= match.index && foundLineNo < 0) {
+      foundLineNo = lineStarts.length - 2;
+    }
+  }
+
+  if (foundLineNo < 0) foundLineNo = lineStarts.length - 1;
+
+  var result = '', i, line;
+  var lineNoLength = Math.min(mark.line + options.linesAfter, lineEnds.length).toString().length;
+  var maxLineLength = options.maxLength - (options.indent + lineNoLength + 3);
+
+  for (i = 1; i <= options.linesBefore; i++) {
+    if (foundLineNo - i < 0) break;
+    line = getLine(
+      mark.buffer,
+      lineStarts[foundLineNo - i],
+      lineEnds[foundLineNo - i],
+      mark.position - (lineStarts[foundLineNo] - lineStarts[foundLineNo - i]),
+      maxLineLength
+    );
+    result = common.repeat(' ', options.indent) + padStart((mark.line - i + 1).toString(), lineNoLength) +
+      ' | ' + line.str + '\n' + result;
+  }
+
+  line = getLine(mark.buffer, lineStarts[foundLineNo], lineEnds[foundLineNo], mark.position, maxLineLength);
+  result += common.repeat(' ', options.indent) + padStart((mark.line + 1).toString(), lineNoLength) +
+    ' | ' + line.str + '\n';
+  result += common.repeat('-', options.indent + lineNoLength + 3 + line.pos) + '^' + '\n';
+
+  for (i = 1; i <= options.linesAfter; i++) {
+    if (foundLineNo + i >= lineEnds.length) break;
+    line = getLine(
+      mark.buffer,
+      lineStarts[foundLineNo + i],
+      lineEnds[foundLineNo + i],
+      mark.position - (lineStarts[foundLineNo] - lineStarts[foundLineNo + i]),
+      maxLineLength
+    );
+    result += common.repeat(' ', options.indent) + padStart((mark.line + i + 1).toString(), lineNoLength) +
+      ' | ' + line.str + '\n';
+  }
+
+  return result.replace(/\n$/, '');
+}
+
+
+module.exports = makeSnippet;
+
+
+/***/ }),
+
+/***/ 6073:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var YAMLException = __nccwpck_require__(8179);
+
+var TYPE_CONSTRUCTOR_OPTIONS = [
+  'kind',
+  'multi',
+  'resolve',
+  'construct',
+  'instanceOf',
+  'predicate',
+  'represent',
+  'representName',
+  'defaultStyle',
+  'styleAliases'
+];
+
+var YAML_NODE_KINDS = [
+  'scalar',
+  'sequence',
+  'mapping'
+];
+
+function compileStyleAliases(map) {
+  var result = {};
+
+  if (map !== null) {
+    Object.keys(map).forEach(function (style) {
+      map[style].forEach(function (alias) {
+        result[String(alias)] = style;
+      });
+    });
+  }
+
+  return result;
+}
+
+function Type(tag, options) {
+  options = options || {};
+
+  Object.keys(options).forEach(function (name) {
+    if (TYPE_CONSTRUCTOR_OPTIONS.indexOf(name) === -1) {
+      throw new YAMLException('Unknown option "' + name + '" is met in definition of "' + tag + '" YAML type.');
+    }
+  });
+
+  // TODO: Add tag format check.
+  this.options       = options; // keep original options in case user wants to extend this type later
+  this.tag           = tag;
+  this.kind          = options['kind']          || null;
+  this.resolve       = options['resolve']       || function () { return true; };
+  this.construct     = options['construct']     || function (data) { return data; };
+  this.instanceOf    = options['instanceOf']    || null;
+  this.predicate     = options['predicate']     || null;
+  this.represent     = options['represent']     || null;
+  this.representName = options['representName'] || null;
+  this.defaultStyle  = options['defaultStyle']  || null;
+  this.multi         = options['multi']         || false;
+  this.styleAliases  = compileStyleAliases(options['styleAliases'] || null);
+
+  if (YAML_NODE_KINDS.indexOf(this.kind) === -1) {
+    throw new YAMLException('Unknown kind "' + this.kind + '" is specified for "' + tag + '" YAML type.');
+  }
+}
+
+module.exports = Type;
+
+
+/***/ }),
+
+/***/ 7900:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+/*eslint-disable no-bitwise*/
+
+
+var Type = __nccwpck_require__(6073);
+
+
+// [ 64, 65, 66 ] -> [ padding, CR, LF ]
+var BASE64_MAP = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=\n\r';
+
+
+function resolveYamlBinary(data) {
+  if (data === null) return false;
+
+  var code, idx, bitlen = 0, max = data.length, map = BASE64_MAP;
+
+  // Convert one by one.
+  for (idx = 0; idx < max; idx++) {
+    code = map.indexOf(data.charAt(idx));
+
+    // Skip CR/LF
+    if (code > 64) continue;
+
+    // Fail on illegal characters
+    if (code < 0) return false;
+
+    bitlen += 6;
+  }
+
+  // If there are any bits left, source was corrupted
+  return (bitlen % 8) === 0;
+}
+
+function constructYamlBinary(data) {
+  var idx, tailbits,
+      input = data.replace(/[\r\n=]/g, ''), // remove CR/LF & padding to simplify scan
+      max = input.length,
+      map = BASE64_MAP,
+      bits = 0,
+      result = [];
+
+  // Collect by 6*4 bits (3 bytes)
+
+  for (idx = 0; idx < max; idx++) {
+    if ((idx % 4 === 0) && idx) {
+      result.push((bits >> 16) & 0xFF);
+      result.push((bits >> 8) & 0xFF);
+      result.push(bits & 0xFF);
+    }
+
+    bits = (bits << 6) | map.indexOf(input.charAt(idx));
+  }
+
+  // Dump tail
+
+  tailbits = (max % 4) * 6;
+
+  if (tailbits === 0) {
+    result.push((bits >> 16) & 0xFF);
+    result.push((bits >> 8) & 0xFF);
+    result.push(bits & 0xFF);
+  } else if (tailbits === 18) {
+    result.push((bits >> 10) & 0xFF);
+    result.push((bits >> 2) & 0xFF);
+  } else if (tailbits === 12) {
+    result.push((bits >> 4) & 0xFF);
+  }
+
+  return new Uint8Array(result);
+}
+
+function representYamlBinary(object /*, style*/) {
+  var result = '', bits = 0, idx, tail,
+      max = object.length,
+      map = BASE64_MAP;
+
+  // Convert every three bytes to 4 ASCII characters.
+
+  for (idx = 0; idx < max; idx++) {
+    if ((idx % 3 === 0) && idx) {
+      result += map[(bits >> 18) & 0x3F];
+      result += map[(bits >> 12) & 0x3F];
+      result += map[(bits >> 6) & 0x3F];
+      result += map[bits & 0x3F];
+    }
+
+    bits = (bits << 8) + object[idx];
+  }
+
+  // Dump tail
+
+  tail = max % 3;
+
+  if (tail === 0) {
+    result += map[(bits >> 18) & 0x3F];
+    result += map[(bits >> 12) & 0x3F];
+    result += map[(bits >> 6) & 0x3F];
+    result += map[bits & 0x3F];
+  } else if (tail === 2) {
+    result += map[(bits >> 10) & 0x3F];
+    result += map[(bits >> 4) & 0x3F];
+    result += map[(bits << 2) & 0x3F];
+    result += map[64];
+  } else if (tail === 1) {
+    result += map[(bits >> 2) & 0x3F];
+    result += map[(bits << 4) & 0x3F];
+    result += map[64];
+    result += map[64];
+  }
+
+  return result;
+}
+
+function isBinary(obj) {
+  return Object.prototype.toString.call(obj) ===  '[object Uint8Array]';
+}
+
+module.exports = new Type('tag:yaml.org,2002:binary', {
+  kind: 'scalar',
+  resolve: resolveYamlBinary,
+  construct: constructYamlBinary,
+  predicate: isBinary,
+  represent: representYamlBinary
+});
+
+
+/***/ }),
+
+/***/ 4993:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+function resolveYamlBoolean(data) {
+  if (data === null) return false;
+
+  var max = data.length;
+
+  return (max === 4 && (data === 'true' || data === 'True' || data === 'TRUE')) ||
+         (max === 5 && (data === 'false' || data === 'False' || data === 'FALSE'));
+}
+
+function constructYamlBoolean(data) {
+  return data === 'true' ||
+         data === 'True' ||
+         data === 'TRUE';
+}
+
+function isBoolean(object) {
+  return Object.prototype.toString.call(object) === '[object Boolean]';
+}
+
+module.exports = new Type('tag:yaml.org,2002:bool', {
+  kind: 'scalar',
+  resolve: resolveYamlBoolean,
+  construct: constructYamlBoolean,
+  predicate: isBoolean,
+  represent: {
+    lowercase: function (object) { return object ? 'true' : 'false'; },
+    uppercase: function (object) { return object ? 'TRUE' : 'FALSE'; },
+    camelcase: function (object) { return object ? 'True' : 'False'; }
+  },
+  defaultStyle: 'lowercase'
+});
+
+
+/***/ }),
+
+/***/ 2705:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var common = __nccwpck_require__(6829);
+var Type   = __nccwpck_require__(6073);
+
+var YAML_FLOAT_PATTERN = new RegExp(
+  // 2.5e4, 2.5 and integers
+  '^(?:[-+]?(?:[0-9][0-9_]*)(?:\\.[0-9_]*)?(?:[eE][-+]?[0-9]+)?' +
+  // .2e4, .2
+  // special case, seems not from spec
+  '|\\.[0-9_]+(?:[eE][-+]?[0-9]+)?' +
+  // .inf
+  '|[-+]?\\.(?:inf|Inf|INF)' +
+  // .nan
+  '|\\.(?:nan|NaN|NAN))$');
+
+function resolveYamlFloat(data) {
+  if (data === null) return false;
+
+  if (!YAML_FLOAT_PATTERN.test(data) ||
+      // Quick hack to not allow integers end with `_`
+      // Probably should update regexp & check speed
+      data[data.length - 1] === '_') {
+    return false;
+  }
+
+  return true;
+}
+
+function constructYamlFloat(data) {
+  var value, sign;
+
+  value  = data.replace(/_/g, '').toLowerCase();
+  sign   = value[0] === '-' ? -1 : 1;
+
+  if ('+-'.indexOf(value[0]) >= 0) {
+    value = value.slice(1);
+  }
+
+  if (value === '.inf') {
+    return (sign === 1) ? Number.POSITIVE_INFINITY : Number.NEGATIVE_INFINITY;
+
+  } else if (value === '.nan') {
+    return NaN;
+  }
+  return sign * parseFloat(value, 10);
+}
+
+
+var SCIENTIFIC_WITHOUT_DOT = /^[-+]?[0-9]+e/;
+
+function representYamlFloat(object, style) {
+  var res;
+
+  if (isNaN(object)) {
+    switch (style) {
+      case 'lowercase': return '.nan';
+      case 'uppercase': return '.NAN';
+      case 'camelcase': return '.NaN';
+    }
+  } else if (Number.POSITIVE_INFINITY === object) {
+    switch (style) {
+      case 'lowercase': return '.inf';
+      case 'uppercase': return '.INF';
+      case 'camelcase': return '.Inf';
+    }
+  } else if (Number.NEGATIVE_INFINITY === object) {
+    switch (style) {
+      case 'lowercase': return '-.inf';
+      case 'uppercase': return '-.INF';
+      case 'camelcase': return '-.Inf';
+    }
+  } else if (common.isNegativeZero(object)) {
+    return '-0.0';
+  }
+
+  res = object.toString(10);
+
+  // JS stringifier can build scientific format without dots: 5e-100,
+  // while YAML requres dot: 5.e-100. Fix it with simple hack
+
+  return SCIENTIFIC_WITHOUT_DOT.test(res) ? res.replace('e', '.e') : res;
+}
+
+function isFloat(object) {
+  return (Object.prototype.toString.call(object) === '[object Number]') &&
+         (object % 1 !== 0 || common.isNegativeZero(object));
+}
+
+module.exports = new Type('tag:yaml.org,2002:float', {
+  kind: 'scalar',
+  resolve: resolveYamlFloat,
+  construct: constructYamlFloat,
+  predicate: isFloat,
+  represent: representYamlFloat,
+  defaultStyle: 'lowercase'
+});
+
+
+/***/ }),
+
+/***/ 1615:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var common = __nccwpck_require__(6829);
+var Type   = __nccwpck_require__(6073);
+
+function isHexCode(c) {
+  return ((0x30/* 0 */ <= c) && (c <= 0x39/* 9 */)) ||
+         ((0x41/* A */ <= c) && (c <= 0x46/* F */)) ||
+         ((0x61/* a */ <= c) && (c <= 0x66/* f */));
+}
+
+function isOctCode(c) {
+  return ((0x30/* 0 */ <= c) && (c <= 0x37/* 7 */));
+}
+
+function isDecCode(c) {
+  return ((0x30/* 0 */ <= c) && (c <= 0x39/* 9 */));
+}
+
+function resolveYamlInteger(data) {
+  if (data === null) return false;
+
+  var max = data.length,
+      index = 0,
+      hasDigits = false,
+      ch;
+
+  if (!max) return false;
+
+  ch = data[index];
+
+  // sign
+  if (ch === '-' || ch === '+') {
+    ch = data[++index];
+  }
+
+  if (ch === '0') {
+    // 0
+    if (index + 1 === max) return true;
+    ch = data[++index];
+
+    // base 2, base 8, base 16
+
+    if (ch === 'b') {
+      // base 2
+      index++;
+
+      for (; index < max; index++) {
+        ch = data[index];
+        if (ch === '_') continue;
+        if (ch !== '0' && ch !== '1') return false;
+        hasDigits = true;
+      }
+      return hasDigits && ch !== '_';
+    }
+
+
+    if (ch === 'x') {
+      // base 16
+      index++;
+
+      for (; index < max; index++) {
+        ch = data[index];
+        if (ch === '_') continue;
+        if (!isHexCode(data.charCodeAt(index))) return false;
+        hasDigits = true;
+      }
+      return hasDigits && ch !== '_';
+    }
+
+
+    if (ch === 'o') {
+      // base 8
+      index++;
+
+      for (; index < max; index++) {
+        ch = data[index];
+        if (ch === '_') continue;
+        if (!isOctCode(data.charCodeAt(index))) return false;
+        hasDigits = true;
+      }
+      return hasDigits && ch !== '_';
+    }
+  }
+
+  // base 10 (except 0)
+
+  // value should not start with `_`;
+  if (ch === '_') return false;
+
+  for (; index < max; index++) {
+    ch = data[index];
+    if (ch === '_') continue;
+    if (!isDecCode(data.charCodeAt(index))) {
+      return false;
+    }
+    hasDigits = true;
+  }
+
+  // Should have digits and should not end with `_`
+  if (!hasDigits || ch === '_') return false;
+
+  return true;
+}
+
+function constructYamlInteger(data) {
+  var value = data, sign = 1, ch;
+
+  if (value.indexOf('_') !== -1) {
+    value = value.replace(/_/g, '');
+  }
+
+  ch = value[0];
+
+  if (ch === '-' || ch === '+') {
+    if (ch === '-') sign = -1;
+    value = value.slice(1);
+    ch = value[0];
+  }
+
+  if (value === '0') return 0;
+
+  if (ch === '0') {
+    if (value[1] === 'b') return sign * parseInt(value.slice(2), 2);
+    if (value[1] === 'x') return sign * parseInt(value.slice(2), 16);
+    if (value[1] === 'o') return sign * parseInt(value.slice(2), 8);
+  }
+
+  return sign * parseInt(value, 10);
+}
+
+function isInteger(object) {
+  return (Object.prototype.toString.call(object)) === '[object Number]' &&
+         (object % 1 === 0 && !common.isNegativeZero(object));
+}
+
+module.exports = new Type('tag:yaml.org,2002:int', {
+  kind: 'scalar',
+  resolve: resolveYamlInteger,
+  construct: constructYamlInteger,
+  predicate: isInteger,
+  represent: {
+    binary:      function (obj) { return obj >= 0 ? '0b' + obj.toString(2) : '-0b' + obj.toString(2).slice(1); },
+    octal:       function (obj) { return obj >= 0 ? '0o'  + obj.toString(8) : '-0o'  + obj.toString(8).slice(1); },
+    decimal:     function (obj) { return obj.toString(10); },
+    /* eslint-disable max-len */
+    hexadecimal: function (obj) { return obj >= 0 ? '0x' + obj.toString(16).toUpperCase() :  '-0x' + obj.toString(16).toUpperCase().slice(1); }
+  },
+  defaultStyle: 'decimal',
+  styleAliases: {
+    binary:      [ 2,  'bin' ],
+    octal:       [ 8,  'oct' ],
+    decimal:     [ 10, 'dec' ],
+    hexadecimal: [ 16, 'hex' ]
+  }
+});
+
+
+/***/ }),
+
+/***/ 6150:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+module.exports = new Type('tag:yaml.org,2002:map', {
+  kind: 'mapping',
+  construct: function (data) { return data !== null ? data : {}; }
+});
+
+
+/***/ }),
+
+/***/ 6104:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+function resolveYamlMerge(data) {
+  return data === '<<' || data === null;
+}
+
+module.exports = new Type('tag:yaml.org,2002:merge', {
+  kind: 'scalar',
+  resolve: resolveYamlMerge
+});
+
+
+/***/ }),
+
+/***/ 721:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+function resolveYamlNull(data) {
+  if (data === null) return true;
+
+  var max = data.length;
+
+  return (max === 1 && data === '~') ||
+         (max === 4 && (data === 'null' || data === 'Null' || data === 'NULL'));
+}
+
+function constructYamlNull() {
+  return null;
+}
+
+function isNull(object) {
+  return object === null;
+}
+
+module.exports = new Type('tag:yaml.org,2002:null', {
+  kind: 'scalar',
+  resolve: resolveYamlNull,
+  construct: constructYamlNull,
+  predicate: isNull,
+  represent: {
+    canonical: function () { return '~';    },
+    lowercase: function () { return 'null'; },
+    uppercase: function () { return 'NULL'; },
+    camelcase: function () { return 'Null'; },
+    empty:     function () { return '';     }
+  },
+  defaultStyle: 'lowercase'
+});
+
+
+/***/ }),
+
+/***/ 9046:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+var _hasOwnProperty = Object.prototype.hasOwnProperty;
+var _toString       = Object.prototype.toString;
+
+function resolveYamlOmap(data) {
+  if (data === null) return true;
+
+  var objectKeys = [], index, length, pair, pairKey, pairHasKey,
+      object = data;
+
+  for (index = 0, length = object.length; index < length; index += 1) {
+    pair = object[index];
+    pairHasKey = false;
+
+    if (_toString.call(pair) !== '[object Object]') return false;
+
+    for (pairKey in pair) {
+      if (_hasOwnProperty.call(pair, pairKey)) {
+        if (!pairHasKey) pairHasKey = true;
+        else return false;
+      }
+    }
+
+    if (!pairHasKey) return false;
+
+    if (objectKeys.indexOf(pairKey) === -1) objectKeys.push(pairKey);
+    else return false;
+  }
+
+  return true;
+}
+
+function constructYamlOmap(data) {
+  return data !== null ? data : [];
+}
+
+module.exports = new Type('tag:yaml.org,2002:omap', {
+  kind: 'sequence',
+  resolve: resolveYamlOmap,
+  construct: constructYamlOmap
+});
+
+
+/***/ }),
+
+/***/ 6860:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+var _toString = Object.prototype.toString;
+
+function resolveYamlPairs(data) {
+  if (data === null) return true;
+
+  var index, length, pair, keys, result,
+      object = data;
+
+  result = new Array(object.length);
+
+  for (index = 0, length = object.length; index < length; index += 1) {
+    pair = object[index];
+
+    if (_toString.call(pair) !== '[object Object]') return false;
+
+    keys = Object.keys(pair);
+
+    if (keys.length !== 1) return false;
+
+    result[index] = [ keys[0], pair[keys[0]] ];
+  }
+
+  return true;
+}
+
+function constructYamlPairs(data) {
+  if (data === null) return [];
+
+  var index, length, pair, keys, result,
+      object = data;
+
+  result = new Array(object.length);
+
+  for (index = 0, length = object.length; index < length; index += 1) {
+    pair = object[index];
+
+    keys = Object.keys(pair);
+
+    result[index] = [ keys[0], pair[keys[0]] ];
+  }
+
+  return result;
+}
+
+module.exports = new Type('tag:yaml.org,2002:pairs', {
+  kind: 'sequence',
+  resolve: resolveYamlPairs,
+  construct: constructYamlPairs
+});
+
+
+/***/ }),
+
+/***/ 7283:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+module.exports = new Type('tag:yaml.org,2002:seq', {
+  kind: 'sequence',
+  construct: function (data) { return data !== null ? data : []; }
+});
+
+
+/***/ }),
+
+/***/ 9548:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+var _hasOwnProperty = Object.prototype.hasOwnProperty;
+
+function resolveYamlSet(data) {
+  if (data === null) return true;
+
+  var key, object = data;
+
+  for (key in object) {
+    if (_hasOwnProperty.call(object, key)) {
+      if (object[key] !== null) return false;
+    }
+  }
+
+  return true;
+}
+
+function constructYamlSet(data) {
+  return data !== null ? data : {};
+}
+
+module.exports = new Type('tag:yaml.org,2002:set', {
+  kind: 'mapping',
+  resolve: resolveYamlSet,
+  construct: constructYamlSet
+});
+
+
+/***/ }),
+
+/***/ 3619:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+module.exports = new Type('tag:yaml.org,2002:str', {
+  kind: 'scalar',
+  construct: function (data) { return data !== null ? data : ''; }
+});
+
+
+/***/ }),
+
+/***/ 9212:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+
+
+var Type = __nccwpck_require__(6073);
+
+var YAML_DATE_REGEXP = new RegExp(
+  '^([0-9][0-9][0-9][0-9])'          + // [1] year
+  '-([0-9][0-9])'                    + // [2] month
+  '-([0-9][0-9])$');                   // [3] day
+
+var YAML_TIMESTAMP_REGEXP = new RegExp(
+  '^([0-9][0-9][0-9][0-9])'          + // [1] year
+  '-([0-9][0-9]?)'                   + // [2] month
+  '-([0-9][0-9]?)'                   + // [3] day
+  '(?:[Tt]|[ \\t]+)'                 + // ...
+  '([0-9][0-9]?)'                    + // [4] hour
+  ':([0-9][0-9])'                    + // [5] minute
+  ':([0-9][0-9])'                    + // [6] second
+  '(?:\\.([0-9]*))?'                 + // [7] fraction
+  '(?:[ \\t]*(Z|([-+])([0-9][0-9]?)' + // [8] tz [9] tz_sign [10] tz_hour
+  '(?::([0-9][0-9]))?))?$');           // [11] tz_minute
+
+function resolveYamlTimestamp(data) {
+  if (data === null) return false;
+  if (YAML_DATE_REGEXP.exec(data) !== null) return true;
+  if (YAML_TIMESTAMP_REGEXP.exec(data) !== null) return true;
+  return false;
+}
+
+function constructYamlTimestamp(data) {
+  var match, year, month, day, hour, minute, second, fraction = 0,
+      delta = null, tz_hour, tz_minute, date;
+
+  match = YAML_DATE_REGEXP.exec(data);
+  if (match === null) match = YAML_TIMESTAMP_REGEXP.exec(data);
+
+  if (match === null) throw new Error('Date resolve error');
+
+  // match: [1] year [2] month [3] day
+
+  year = +(match[1]);
+  month = +(match[2]) - 1; // JS month starts with 0
+  day = +(match[3]);
+
+  if (!match[4]) { // no hour
+    return new Date(Date.UTC(year, month, day));
+  }
+
+  // match: [4] hour [5] minute [6] second [7] fraction
+
+  hour = +(match[4]);
+  minute = +(match[5]);
+  second = +(match[6]);
+
+  if (match[7]) {
+    fraction = match[7].slice(0, 3);
+    while (fraction.length < 3) { // milli-seconds
+      fraction += '0';
+    }
+    fraction = +fraction;
+  }
+
+  // match: [8] tz [9] tz_sign [10] tz_hour [11] tz_minute
+
+  if (match[9]) {
+    tz_hour = +(match[10]);
+    tz_minute = +(match[11] || 0);
+    delta = (tz_hour * 60 + tz_minute) * 60000; // delta in mili-seconds
+    if (match[9] === '-') delta = -delta;
+  }
+
+  date = new Date(Date.UTC(year, month, day, hour, minute, second, fraction));
+
+  if (delta) date.setTime(date.getTime() - delta);
+
+  return date;
+}
+
+function representYamlTimestamp(object /*, style*/) {
+  return object.toISOString();
+}
+
+module.exports = new Type('tag:yaml.org,2002:timestamp', {
+  kind: 'scalar',
+  resolve: resolveYamlTimestamp,
+  construct: constructYamlTimestamp,
+  instanceOf: Date,
+  represent: representYamlTimestamp
+});
+
+
+/***/ }),
+
+/***/ 1223:
+/***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
+
+var wrappy = __nccwpck_require__(2940)
+module.exports = wrappy(once)
+module.exports.strict = wrappy(onceStrict)
+
+once.proto = once(function () {
+  Object.defineProperty(Function.prototype, 'once', {
+    value: function () {
+      return once(this)
+    },
+    configurable: true
+  })
+
+  Object.defineProperty(Function.prototype, 'onceStrict', {
+    value: function () {
+      return onceStrict(this)
+    },
+    configurable: true
+  })
+})
+
+function once (fn) {
+  var f = function () {
+    if (f.called) return f.value
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  f.called = false
+  return f
+}
+
+function onceStrict (fn) {
+  var f = function () {
+    if (f.called)
+      throw new Error(f.onceError)
+    f.called = true
+    return f.value = fn.apply(this, arguments)
+  }
+  var name = fn.name || 'Function wrapped with `once`'
+  f.onceError = name + " shouldn't be called more than once"
+  f.called = false
+  return f
+}
+
+
+/***/ }),
+
 /***/ 4294:
 /***/ ((module, __unused_webpack_exports, __nccwpck_require__) => {
 
@@ -23974,6 +31453,31 @@ module.exports = {
 
 /***/ }),
 
+/***/ 5030:
+/***/ ((__unused_webpack_module, exports) => {
+
+
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+
+function getUserAgent() {
+  if (typeof navigator === "object" && "userAgent" in navigator) {
+    return navigator.userAgent;
+  }
+
+  if (typeof process === "object" && process.version !== undefined) {
+    return `Node.js/${process.version.substr(1)} (${process.platform}; ${process.arch})`;
+  }
+
+  return "<environment undetectable>";
+}
+
+exports.getUserAgent = getUserAgent;
+//# sourceMappingURL=index.js.map
+
+
+/***/ }),
+
 /***/ 5840:
 /***/ ((__unused_webpack_module, exports, __nccwpck_require__) => {
 
@@ -24602,6 +32106,176 @@ function version(uuid) {
 
 var _default = version;
 exports["default"] = _default;
+
+/***/ }),
+
+/***/ 2940:
+/***/ ((module) => {
+
+// Returns a wrapper function that returns a wrapped callback
+// The wrapper function should do some stuff, and return a
+// presumably different callback function.
+// This makes sure that own properties are retained, so that
+// decorations and such are not lost along the way.
+module.exports = wrappy
+function wrappy (fn, cb) {
+  if (fn && cb) return wrappy(fn)(cb)
+
+  if (typeof fn !== 'function')
+    throw new TypeError('need wrapper function')
+
+  Object.keys(fn).forEach(function (k) {
+    wrapper[k] = fn[k]
+  })
+
+  return wrapper
+
+  function wrapper() {
+    var args = new Array(arguments.length)
+    for (var i = 0; i < args.length; i++) {
+      args[i] = arguments[i]
+    }
+    var ret = fn.apply(this, args)
+    var cb = args[args.length-1]
+    if (typeof ret === 'function' && ret !== cb) {
+      Object.keys(cb).forEach(function (k) {
+        ret[k] = cb[k]
+      })
+    }
+    return ret
+  }
+}
+
+
+/***/ }),
+
+/***/ 7672:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "Z": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+async function action(octokit, milliseconds) {
+    return new Promise(resolve => {
+        if (isNaN(milliseconds)) {
+            throw new Error('milliseconds not a number');
+        }
+        setTimeout(() => resolve('done!'), milliseconds);
+    });
+}
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (action);
+
+
+/***/ }),
+
+/***/ 6388:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "s": () => (/* binding */ ActionError)
+/* harmony export */ });
+/* unused harmony export raise */
+class ActionError extends Error {
+    constructor(message, code) {
+        super(message);
+        this.code = code;
+    }
+}
+function raise(error, code) {
+    throw new ActionError(error, code);
+}
+
+
+/***/ }),
+
+/***/ 399:
+/***/ ((module, __unused_webpack___webpack_exports__, __nccwpck_require__) => {
+
+__nccwpck_require__.a(module, async (__webpack_handle_async_dependencies__, __webpack_async_result__) => { try {
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _total_typescript_ts_reset__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(8678);
+/* harmony import */ var _total_typescript_ts_reset__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_total_typescript_ts_reset__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _action__WEBPACK_IMPORTED_MODULE_4__ = __nccwpck_require__(7672);
+/* harmony import */ var _octokit__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(6161);
+/* harmony import */ var _error__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(6388);
+
+
+
+
+
+const octokit = (0,_octokit__WEBPACK_IMPORTED_MODULE_2__/* .getOctokit */ .P)((0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('token', { required: true }));
+try {
+    let message = await (0,_action__WEBPACK_IMPORTED_MODULE_4__/* ["default"] */ .Z)(octokit, +(0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput)('milliseconds', { required: true }));
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput)('status', JSON.stringify(message));
+}
+catch (error) {
+    let message;
+    if (error instanceof Error) {
+        message = error.message;
+    }
+    else {
+        message = JSON.stringify(error);
+    }
+    // set status output only if error was thrown by us
+    if (error instanceof _error__WEBPACK_IMPORTED_MODULE_3__/* .ActionError */ .s) {
+        (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput)('status', JSON.stringify(message));
+    }
+    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed)(message);
+}
+
+__webpack_async_result__();
+} catch(e) { __webpack_async_result__(e); } }, 1);
+
+/***/ }),
+
+/***/ 6161:
+/***/ ((__unused_webpack_module, __webpack_exports__, __nccwpck_require__) => {
+
+/* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   "P": () => (/* binding */ getOctokit)
+/* harmony export */ });
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0__ = __nccwpck_require__(2186);
+/* harmony import */ var _actions_core__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__nccwpck_require__.n(_actions_core__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _octokit_core__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(6762);
+/* harmony import */ var _octokit_core__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__nccwpck_require__.n(_octokit_core__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _octokit_plugin_throttling__WEBPACK_IMPORTED_MODULE_3__ = __nccwpck_require__(9968);
+/* harmony import */ var _octokit_plugin_throttling__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__nccwpck_require__.n(_octokit_plugin_throttling__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _probot_octokit_plugin_config__WEBPACK_IMPORTED_MODULE_2__ = __nccwpck_require__(9326);
+/* harmony import */ var _probot_octokit_plugin_config__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__nccwpck_require__.n(_probot_octokit_plugin_config__WEBPACK_IMPORTED_MODULE_2__);
+
+
+
+
+const CustomOctokit = _octokit_core__WEBPACK_IMPORTED_MODULE_1__.Octokit.plugin(_probot_octokit_plugin_config__WEBPACK_IMPORTED_MODULE_2__.config, _octokit_plugin_throttling__WEBPACK_IMPORTED_MODULE_3__.throttling);
+function getOctokit(token) {
+    return new CustomOctokit({
+        auth: token,
+        throttle: {
+            onRateLimit: (retryAfter, options, _octokit, retryCount) => {
+                (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`Request quota exhausted for request ${options.method} ${options.url}`);
+                // Retry once after hitting a rate limit error, then give up
+                if (retryCount < 1) {
+                    (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.info)(`Retrying after ${retryAfter} seconds!`);
+                    return true;
+                }
+            },
+            onSecondaryRateLimit: (_retryAfter, options, _octokit) => {
+                // When a secondary rate limit is hit, don't retry
+                (0,_actions_core__WEBPACK_IMPORTED_MODULE_0__.warning)(`SecondaryRateLimit detected for request ${options.method} ${options.url}`);
+            },
+        },
+    });
+}
+
+
+/***/ }),
+
+/***/ 8678:
+/***/ ((module) => {
+
+module.exports = eval("require")("@total-typescript/ts-reset");
+
 
 /***/ }),
 
@@ -26441,47 +34115,115 @@ module.exports = parseParams
 /******/ }
 /******/ 
 /************************************************************************/
+/******/ /* webpack/runtime/async module */
+/******/ (() => {
+/******/ 	var webpackQueues = typeof Symbol === "function" ? Symbol("webpack queues") : "__webpack_queues__";
+/******/ 	var webpackExports = typeof Symbol === "function" ? Symbol("webpack exports") : "__webpack_exports__";
+/******/ 	var webpackError = typeof Symbol === "function" ? Symbol("webpack error") : "__webpack_error__";
+/******/ 	var resolveQueue = (queue) => {
+/******/ 		if(queue && !queue.d) {
+/******/ 			queue.d = 1;
+/******/ 			queue.forEach((fn) => (fn.r--));
+/******/ 			queue.forEach((fn) => (fn.r-- ? fn.r++ : fn()));
+/******/ 		}
+/******/ 	}
+/******/ 	var wrapDeps = (deps) => (deps.map((dep) => {
+/******/ 		if(dep !== null && typeof dep === "object") {
+/******/ 			if(dep[webpackQueues]) return dep;
+/******/ 			if(dep.then) {
+/******/ 				var queue = [];
+/******/ 				queue.d = 0;
+/******/ 				dep.then((r) => {
+/******/ 					obj[webpackExports] = r;
+/******/ 					resolveQueue(queue);
+/******/ 				}, (e) => {
+/******/ 					obj[webpackError] = e;
+/******/ 					resolveQueue(queue);
+/******/ 				});
+/******/ 				var obj = {};
+/******/ 				obj[webpackQueues] = (fn) => (fn(queue));
+/******/ 				return obj;
+/******/ 			}
+/******/ 		}
+/******/ 		var ret = {};
+/******/ 		ret[webpackQueues] = x => {};
+/******/ 		ret[webpackExports] = dep;
+/******/ 		return ret;
+/******/ 	}));
+/******/ 	__nccwpck_require__.a = (module, body, hasAwait) => {
+/******/ 		var queue;
+/******/ 		hasAwait && ((queue = []).d = 1);
+/******/ 		var depQueues = new Set();
+/******/ 		var exports = module.exports;
+/******/ 		var currentDeps;
+/******/ 		var outerResolve;
+/******/ 		var reject;
+/******/ 		var promise = new Promise((resolve, rej) => {
+/******/ 			reject = rej;
+/******/ 			outerResolve = resolve;
+/******/ 		});
+/******/ 		promise[webpackExports] = exports;
+/******/ 		promise[webpackQueues] = (fn) => (queue && fn(queue), depQueues.forEach(fn), promise["catch"](x => {}));
+/******/ 		module.exports = promise;
+/******/ 		body((deps) => {
+/******/ 			currentDeps = wrapDeps(deps);
+/******/ 			var fn;
+/******/ 			var getResult = () => (currentDeps.map((d) => {
+/******/ 				if(d[webpackError]) throw d[webpackError];
+/******/ 				return d[webpackExports];
+/******/ 			}))
+/******/ 			var promise = new Promise((resolve) => {
+/******/ 				fn = () => (resolve(getResult));
+/******/ 				fn.r = 0;
+/******/ 				var fnQueue = (q) => (q !== queue && !depQueues.has(q) && (depQueues.add(q), q && !q.d && (fn.r++, q.push(fn))));
+/******/ 				currentDeps.map((dep) => (dep[webpackQueues](fnQueue)));
+/******/ 			});
+/******/ 			return fn.r ? promise : getResult();
+/******/ 		}, (err) => ((err ? reject(promise[webpackError] = err) : outerResolve(exports)), resolveQueue(queue)));
+/******/ 		queue && (queue.d = 0);
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/compat get default export */
+/******/ (() => {
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__nccwpck_require__.n = (module) => {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			() => (module['default']) :
+/******/ 			() => (module);
+/******/ 		__nccwpck_require__.d(getter, { a: getter });
+/******/ 		return getter;
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/define property getters */
+/******/ (() => {
+/******/ 	// define getter functions for harmony exports
+/******/ 	__nccwpck_require__.d = (exports, definition) => {
+/******/ 		for(var key in definition) {
+/******/ 			if(__nccwpck_require__.o(definition, key) && !__nccwpck_require__.o(exports, key)) {
+/******/ 				Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 			}
+/******/ 		}
+/******/ 	};
+/******/ })();
+/******/ 
+/******/ /* webpack/runtime/hasOwnProperty shorthand */
+/******/ (() => {
+/******/ 	__nccwpck_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ })();
+/******/ 
 /******/ /* webpack/runtime/compat */
 /******/ 
 /******/ if (typeof __nccwpck_require__ !== 'undefined') __nccwpck_require__.ab = new URL('.', import.meta.url).pathname.slice(import.meta.url.match(/^file:\/\/\/\w:/) ? 1 : 0, -1) + "/";
 /******/ 
 /************************************************************************/
-var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
-(() => {
-
-// EXTERNAL MODULE: ./node_modules/@actions/core/lib/core.js
-var core = __nccwpck_require__(2186);
-;// CONCATENATED MODULE: ./src/wait.ts
-async function wait(milliseconds) {
-    return new Promise(resolve => {
-        if (isNaN(milliseconds)) {
-            throw new Error('milliseconds not a number');
-        }
-        setTimeout(() => resolve('done!'), milliseconds);
-    });
-}
-
-;// CONCATENATED MODULE: ./src/main.ts
-
-
-async function run() {
-    try {
-        const ms = core.getInput('milliseconds');
-        core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-        core.debug(new Date().toTimeString());
-        await wait(parseInt(ms, 10));
-        core.debug(new Date().toTimeString());
-        core.setOutput('time', new Date().toTimeString());
-    }
-    catch (error) {
-        if (error instanceof Error)
-            core.setFailed(error.message);
-    }
-}
-run();
-
-})();
-
+/******/ 
+/******/ // startup
+/******/ // Load entry module and return exports
+/******/ // This entry module used 'module' so it can't be inlined
+/******/ var __webpack_exports__ = __nccwpck_require__(399);
+/******/ __webpack_exports__ = await __webpack_exports__;
+/******/ 
 
 //# sourceMappingURL=index.js.map

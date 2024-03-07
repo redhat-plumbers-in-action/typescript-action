@@ -1,19 +1,33 @@
-import * as core from '@actions/core';
-import { wait } from './wait';
+import { getInput, setFailed, setOutput } from '@actions/core';
 
-async function run(): Promise<void> {
-  try {
-    const ms: string = core.getInput('milliseconds');
-    core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
+import '@total-typescript/ts-reset';
 
-    core.debug(new Date().toTimeString());
-    await wait(parseInt(ms, 10));
-    core.debug(new Date().toTimeString());
+import action from './action';
+import { getOctokit } from './octokit';
+import { ActionError } from './error';
 
-    core.setOutput('time', new Date().toTimeString());
-  } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message);
+const octokit = getOctokit(getInput('token', { required: true }));
+
+try {
+  let message = await action(
+    octokit,
+    +getInput('milliseconds', { required: true })
+  );
+
+  setOutput('status', JSON.stringify(message));
+} catch (error) {
+  let message: string;
+
+  if (error instanceof Error) {
+    message = error.message;
+  } else {
+    message = JSON.stringify(error);
   }
-}
 
-run();
+  // set status output only if error was thrown by us
+  if (error instanceof ActionError) {
+    setOutput('status', JSON.stringify(message));
+  }
+
+  setFailed(message);
+}
