@@ -1,4 +1,9 @@
-export async function wait(milliseconds: number): Promise<string> {
+import { CustomOctokit } from './octokit';
+
+async function action(
+  octokit: CustomOctokit,
+  milliseconds: number
+): Promise<string> {
   return new Promise(resolve => {
     if (isNaN(milliseconds)) {
       throw new Error('milliseconds not a number');
@@ -7,3 +12,5 @@ export async function wait(milliseconds: number): Promise<string> {
     setTimeout(() => resolve('done!'), milliseconds);
   });
 }
+
+export default action;
