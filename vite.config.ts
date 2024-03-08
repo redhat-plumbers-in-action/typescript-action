@@ -1,5 +1,14 @@
-import { defineConfig } from 'vitest/config';
+import { defineConfig } from 'vite';
 
 export default defineConfig({
-  test: {},
+  build: {
+    target: 'esnext',
+    outDir: 'dist',
+    lib: {
+      entry: 'src/main.ts',
+      fileName: 'index',
+      name: 'TypeScript Action template',
+      formats: ['es'],
+    },
+  },
 });
