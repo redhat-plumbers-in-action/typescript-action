@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from 'vitest';
 
-import * as cp from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import type { ExecFileSyncOptions } from 'node:child_process';
 import * as path from 'node:path';
 
 import action from '../src/action';
@@ -34,10 +35,10 @@ describe('action tests', () => {
   // shows how the runner will run a javascript action with env / stdout protocol
   test('test runs', async () => {
     const np = process.execPath;
-    const ip = path.join(__dirname, '..', 'dist', 'index.js');
-    const options: cp.ExecFileSyncOptions = {
+    const ip = path.join(__dirname, '..', 'dist', 'main.js');
+    const options: ExecFileSyncOptions = {
       env: process.env,
     };
-    console.log(cp.execFileSync(np, [ip], options).toString());
+    console.log(execFileSync(np, [ip], options).toString());
   });
 });
